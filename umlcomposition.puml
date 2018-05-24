@@ -1,0 +1,58 @@
+@startuml
+class Profile {
+  String name
+  String email
+}
+
+class DjangoUser {
+  User user
+}
+
+class Party {
+  String name
+  Enum ('active', 'inactive')
+  Profile created_by
+}
+
+class Food {
+  String name
+  Decimal price
+}
+
+class Membership {
+  Integer member_id
+  Integer party_id
+  Integer member_food_exclude_id
+  Boolean is_owner
+  Decimal total_sponsored
+}
+
+class MemberFoodExclude {
+  Integer membership_id
+  Integer food_id
+}
+
+class PartyDesiredFood {
+  Integer party_id
+  Integer food_id
+  Integer quantity
+}
+
+class Bills {
+
+}
+
+DjangoUser "1" *-- "1" Profile
+
+Profile "1" *-- "many" Membership
+Membership "1" *-- "many" MemberFoodExclude
+Membership "many" *-- "1" Party
+Party "1" *-- "many" PartyDesiredFood
+Party "1" *-- "1" Profile
+
+Food "1" *-- "many" PartyDesiredFood
+
+
+'Profile "1" *-- "many" Ownership
+'Ownership "1" *-- "many" Party
+@enduml

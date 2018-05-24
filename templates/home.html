@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %} Home {% endblock title %}
+
+{% block content %}
+    <div class="container">
+        {% if request.user.is_authenticated %}
+        <div>
+            <h1>WELCOME TO THE RICE FIELD, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></h1>
+        </div>
+
+        <div class="row">
+            <h2>Parties you participate: </h2>
+            {% if parties %}
+                <ul>
+                    {% for party in parties %}
+                        <li><a href="{% url 'party' party.id %}">{{ party }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <h3>May you should find someone to speak?</h3>
+            {% endif %}
+        </div>
+
+        <div class="row">
+            <form action="{% url 'create-party' %}">
+                {% csrf_token %}
+                {{ form }}
+                <button type="submit">Create new party</button>
+            </form>
+        </div>
+
+        {% else %}
+        <div>
+            <h1><a href="{% url 'login' %}">Login</a> | <a href="{% url 'sign-in' %}">Sign in</a></h1>
+        </div>
+        {% endif %}
+    </div>
+{% endblock content %}
