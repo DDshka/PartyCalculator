@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+    {{ block.super }}
+    {% load templatehelpers %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% endblock meta %}
+
+{% block title %}
+    {{ party }}
+{% endblock title %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h1>{{ party }}</h1>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <table class="table">
+                    <caption><h2>Members</h2></caption>
+                    <thead>
+                        <th>Member</th>
+                        <th>Sponsored</th>
+                        <th>Actual expense</th>
+                    </thead>
+                    {% for member in members %}
+                    <tr>
+                        <td>{{ member.profile }}</td>
+                        <td>{{ member.total_sponsored }}</td>
+                        <td>{{ member.actual_expense }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="col-lg-6">
+                {% if ordered_food %}
+                <table class="table">
+                    <caption><h2>Order</h2></caption>
+                     <thead>
+                        <th>Product</th>
+                        <th>PPU</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </thead>
+                    {% for order_item in ordered_food %}
+                    <tr>
+                        <td>{{ order_item }}</td>
+                        <td>{{ order_item.food.price }}</td>
+                        <td>{{ order_item.quantity }}</td>
+                        <td>{{ order_item.total }}</td>
+                        <td>
+                            <form action="{% url 'exclude-food' %}" style="display: inline">
+                                <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                <button type="submit" class="btn btn-danger">Exclude</button>
+                                <!--<i class="glyphicon glyphicon-minus-sign"></i>-->
+                            </form>
+
+                            <form action="{% url 'include-food' %}" class="form-inline" style="display: inline">
+                                <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                <button type="submit" class="btn btn-success">Include</button>
+                                <!--<i class="glyphicon glyphicon-plus-sign"></i>-->
+                            </form>
+                        </td>
+                        <td>
+                            <form action="{% url 'remove-food' %}">
+                                    <input type="hidden" name="party" value="{{ party.id }}">
+                                    <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                    <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                    <h1>Party ordered nothing for now</h1>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                {% if ordered_food %}
+                    <table class="table">
+                        <caption><h1>Details</h1></caption>
+                        <thead>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>People</th>
+                            {% for member in members %}
+                            <th>{{ member.profile }}</th>
+                            {% endfor %}
+                        </thead>
+                        {% for order_item in ordered_food %}
+                            <tr>
+                                <td>{{ order_item.food }}</td>
+                                <td>{{ order_item.food.price }}</td>
+                                <td>{{ order_itemorder.quantity }}</td>
+                                <td>{{ order_item.ppl_count }}</td>
+                                {% for member in members %}
+                                {% if order_item in member.excluded_food.all %}
+                                <td>0</td>
+                                {% else %}
+                                <td>{{ order_item.food.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
+                                {% endif %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="999"><b>Formula: </b><i>TO_PAY = (PRICE * QUANTITY) / PEOPLE_WHO_NOT_EXCLUDED</i></td>
+                        </tr>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+
+                <div class="row">
+            <div class="col-lg-12">
+                {% if food %}
+                    <table class="table">
+                        <caption><h1>Available food</h1></caption>
+                        {% for product in food %}
+                        <tr>
+                            <td>{{ product }}</td>
+                            <td>{{ product.price }}</td>
+                            <form action="{% url 'add-food-to-party' %}">
+                                <input type="hidden" name="party" value="{{ party.id }}">
+                                <input type="hidden" name="food" value="{{ product.id }}">
+                                <td><input type="number" min="1" value="1" name="quantity"></td>
+                                <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <h1>YOU ARE IN THE SOVIET UNION</h1>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+{% endblock content %}

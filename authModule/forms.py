@@ -6,14 +6,14 @@ from authModule.models import Profile
 class LoginForm(forms.ModelForm):
   class Meta:
     model = Profile
-    fields = ('username', 'password')
+    fields = ('username', 'password',)
 
-  __request = None
+  request = None
 
   def __init__(self, *args, **kwargs):
     if args:
       request = args[0]
-      self.__request = request
+      self.request = request
       super(LoginForm, self).__init__(request.POST, **kwargs)
     else:
       super(LoginForm, self).__init__(*args, **kwargs)
@@ -24,7 +24,7 @@ class LoginForm(forms.ModelForm):
     from .methods import auth_user
     username = self.cleaned_data.get('username')
     password = self.cleaned_data.get('password')
-    logged = auth_user(self.__request, username, password)
+    logged = auth_user(self.request, username, password)
 
     if not logged:
       from django.core.exceptions import ValidationError
@@ -34,7 +34,7 @@ class LoginForm(forms.ModelForm):
 class SignInForm(forms.ModelForm):
   class Meta:
     model = Profile
-    fields = ('username', 'password')
+    fields = ('username', 'password', 'email',)
 
   def save(self, commit=True):
     user = super(SignInForm, self).save(commit=False)

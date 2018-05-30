@@ -1,6 +1,7 @@
 from django import forms
 
-from party_calculator.models import Party
+from authModule.models import Profile
+from party_calculator.models import Party, Membership
 
 
 class CreatePartyForm(forms.ModelForm):
@@ -16,7 +17,17 @@ class CreatePartyForm(forms.ModelForm):
 
 
   def save(self, commit=True) -> Party:
-    party: Party = super(CreatePartyForm, self).save(False)
-    party.created_by = self.user
+    name = self.cleaned_data.get('name')
+    members = self.cleaned_data.get('members')
+
+    creator = Profile.objects.get(id=self.user.id)
+
+    party: Party = Party.objects.create(name=name, created_by=creator)
+    owner_membership: Membership = Membership.objects.create(profile=creator, party=party, is_owner=True)
+    owner_membership.save()
+
+    for member in members:
+      membership: Membership = Membership.objects.create(profile=member, party=party)
+      membership.save()
 
     return party

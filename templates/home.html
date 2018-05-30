@@ -10,20 +10,34 @@
         </div>
 
         <div class="row">
-            <h2>Parties you participate: </h2>
-            {% if parties %}
-                <ul>
-                    {% for party in parties %}
-                        <li><a href="{% url 'party' party.id %}">{{ party }}</a></li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <h3>May you should find someone to speak?</h3>
-            {% endif %}
+            <div class="col-lg-6">
+                <h2>Parties you participate: </h2>
+                {% if parties %}
+                    <ul>
+                        {% for party in parties %}
+                            <li><a href="{% url 'party' party.id %}">{{ party }}</a></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <h3>May you should find someone to speak?</h3>
+                {% endif %}
+            </div>
+            <div class="col-lg-6">
+                <h2>Parties you administrate: </h2>
+                {% if adm_parties %}
+                    <ul>
+                        {% for party in adm_parties %}
+                            <li><a href="{% url 'party' party.id %}">{{ party }}</a></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <h3>You administrate no parties</h3>
+                {% endif %}
+            </div>
         </div>
 
         <div class="row">
-            <form action="{% url 'create-party' %}">
+            <form action="{% url 'create-party' %}" method="post">
                 {% csrf_token %}
                 {{ form }}
                 <button type="submit">Create new party</button>

@@ -29,30 +29,22 @@ class Membership {
 
 class MemberFoodExclude {
   Integer membership_id
-  Integer food_id
+  Integer orderedFood_id
 }
 
-class PartyDesiredFood {
+class OrderedFood {
   Integer party_id
-  Integer food_id
+  String food_name
+  Decimal price_per_unit
   Integer quantity
 }
 
-class Bills {
-
-}
 
 DjangoUser "1" *-- "1" Profile
 
 Profile "1" *-- "many" Membership
 Membership "1" *-- "many" MemberFoodExclude
 Membership "many" *-- "1" Party
-Party "1" *-- "many" PartyDesiredFood
+Party "1" --* "many" OrderedFood
 Party "1" *-- "1" Profile
-
-Food "1" *-- "many" PartyDesiredFood
-
-
-'Profile "1" *-- "many" Ownership
-'Ownership "1" *-- "many" Party
 @enduml
