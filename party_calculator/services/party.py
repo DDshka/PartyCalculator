@@ -17,13 +17,20 @@ def get_party_ordered_food(party: Party):
   return party.orderedfood_set.all()
 
 
-def party_order_food(party_id, food_id, quantity):
+def is_party_member(request, party_id: int) -> bool:
+  profile = get_profile_by_request(request)
+  party = get_party_by_id(party_id)
+  return Membership.objects.filter(profile=profile, party=party).exists()
+
+
+def party_order_food(party_id: int, food_id: int, quantity: int):
   party = get_party_by_id(party_id)
   food = get_food_by_id(food_id)
 
-  party_desired_food, created = OrderedFood.objects.get_or_create(party=party, food=food)
-  party_desired_food.quantity += quantity
-  party_desired_food.save()
+  ordered_food, created = OrderedFood.objects.get_or_create(party=party, food=food.name)
+  ordered_food.price = food.price
+  ordered_food.quantity += quantity
+  ordered_food.save()
 
 def party_remove_from_order(party_id: int, order_item_id: int):
   party = get_party_by_id(party_id)

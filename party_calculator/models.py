@@ -14,16 +14,16 @@ class Food(models.Model):
 class Party(models.Model):
   name = models.CharField(max_length=1024, null=False, blank=False)
 
-  members = models.ManyToManyField(Profile, through='Membership', related_name='members', name='members')
-  ordered_food = models.ManyToManyField(Food, through='OrderedFood', related_name='ordered_food')
-  created_by = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='creator')
+  members = models.ManyToManyField(Profile, through='Membership', related_name='memberships')
+  ordered_food = models.ManyToManyField('OrderedFood', related_name='ordered_by')
+  created_by = models.ForeignKey(Profile, on_delete=models.DO_NOTHING, related_name='creator')
 
   def __str__(self):
     return self.name
 
 
 class Membership(models.Model):
-  profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+  profile = models.ForeignKey(Profile, on_delete=models.DO_NOTHING)
   party = models.ForeignKey(Party, on_delete=models.CASCADE)
   excluded_food = models.ManyToManyField('OrderedFood')
 
@@ -36,12 +36,13 @@ class Membership(models.Model):
 
 class OrderedFood(models.Model):
   party = models.ForeignKey(Party, on_delete=models.CASCADE)
-  food = models.ForeignKey(Food, on_delete=models.CASCADE)
+  food = models.CharField(max_length=1024, null=False, blank=False)
+  price = models.DecimalField(max_digits=16, decimal_places=2, default=0.00)
   quantity = models.IntegerField(default=0)
 
   @property
   def total(self):
-    return self.food.price * self.quantity
+    return self.price * self.quantity
 
   def __str__(self):
     return self.food.__str__()

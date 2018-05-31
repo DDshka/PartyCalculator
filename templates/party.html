@@ -99,13 +99,13 @@
                             <tr>
                                 <td>{{ order_item.food }}</td>
                                 <td>{{ order_item.food.price }}</td>
-                                <td>{{ order_itemorder.quantity }}</td>
+                                <td>{{ order_item.quantity }}</td>
                                 <td>{{ order_item.ppl_count }}</td>
                                 {% for member in members %}
                                 {% if order_item in member.excluded_food.all %}
                                 <td>0</td>
                                 {% else %}
-                                <td>{{ order_item.food.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
+                                <td>{{ order_item.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
                                 {% endif %}
                                 {% endfor %}
                             </tr>

@@ -23,11 +23,13 @@ class CreatePartyForm(forms.ModelForm):
     creator = Profile.objects.get(id=self.user.id)
 
     party: Party = Party.objects.create(name=name, created_by=creator)
-    owner_membership: Membership = Membership.objects.create(profile=creator, party=party, is_owner=True)
-    owner_membership.save()
 
     for member in members:
       membership: Membership = Membership.objects.create(profile=member, party=party)
+
+      if member == creator:
+        membership.is_owner = True
+
       membership.save()
 
     return party

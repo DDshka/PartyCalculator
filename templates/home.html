@@ -27,7 +27,7 @@
                 {% if adm_parties %}
                     <ul>
                         {% for party in adm_parties %}
-                            <li><a href="{% url 'party' party.id %}">{{ party }}</a></li>
+                            <li><a href="{% url 'party' party.party.id %}">{{ party }}</a></li>
                         {% endfor %}
                     </ul>
                 {% else %}

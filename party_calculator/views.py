@@ -1,7 +1,9 @@
+from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import View
 from django.views.generic import TemplateView
 
+from party_calculator.abstracts.party import PartyMemberPermission
 from party_calculator.forms import CreatePartyForm
 from party_calculator.models import Food
 
@@ -26,7 +28,7 @@ class HomeView(TemplateView):
     return context
 
 
-class PartyView(TemplateView):
+class PartyView(PartyMemberPermission, TemplateView):
   template_name = 'party.html'
 
   def get_context_data(self, id:int):
@@ -74,7 +76,7 @@ class PartyAddFood(View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyExcludeFood(View):
+class PartyExcludeFood(PartyMemberPermission, View):
   def get(self, request):
     order_item_id = int(request.GET.get('order_item'))
 
@@ -83,7 +85,7 @@ class PartyExcludeFood(View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyIncludeFood(View):
+class PartyIncludeFood(PartyMemberPermission, View):
   def get(self, request):
     order_item_id = int(request.GET.get('order_item'))
 
@@ -92,7 +94,7 @@ class PartyIncludeFood(View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyRemoveFood(View):
+class PartyRemoveFood(PartyMemberPermission, View):
   def get(self, request):
     party_id = int(request.GET.get('party'))
     order_item_id = int(request.GET.get('order_item'))
