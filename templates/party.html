@@ -49,7 +49,7 @@
                     {% for order_item in ordered_food %}
                     <tr>
                         <td>{{ order_item }}</td>
-                        <td>{{ order_item.food.price }}</td>
+                        <td>{{ order_item.price }}</td>
                         <td>{{ order_item.quantity }}</td>
                         <td>{{ order_item.total }}</td>
                         <td>
@@ -98,7 +98,7 @@
                         {% for order_item in ordered_food %}
                             <tr>
                                 <td>{{ order_item.food }}</td>
-                                <td>{{ order_item.food.price }}</td>
+                                <td>{{ order_item.price }}</td>
                                 <td>{{ order_item.quantity }}</td>
                                 <td>{{ order_item.ppl_count }}</td>
                                 {% for member in members %}
