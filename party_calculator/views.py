@@ -76,7 +76,7 @@ class PartyAddFood(View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyExcludeFood(PartyMemberPermission, View):
+class PartyExcludeFood(View):
   def get(self, request):
     order_item_id = int(request.GET.get('order_item'))
 
@@ -85,7 +85,7 @@ class PartyExcludeFood(PartyMemberPermission, View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyIncludeFood(PartyMemberPermission, View):
+class PartyIncludeFood(View):
   def get(self, request):
     order_item_id = int(request.GET.get('order_item'))
 
@@ -94,7 +94,7 @@ class PartyIncludeFood(PartyMemberPermission, View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyRemoveFood(PartyMemberPermission, View):
+class PartyRemoveFood(View):
   def get(self, request):
     party_id = int(request.GET.get('party'))
     order_item_id = int(request.GET.get('order_item'))
