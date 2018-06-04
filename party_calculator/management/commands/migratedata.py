@@ -1,5 +1,3 @@
-import importlib
-
 from django.core.management import BaseCommand
 
 
@@ -19,17 +17,17 @@ class Command(BaseCommand):
 
     headers = self.clear_and_split(file.readline())
 
-    i = 0
+    i = 1
     for line in file:
-      if i < 10:
-        splitted = self.clear_and_split(line)
-        kwargs = dict(zip(headers, splitted))
+      splitted = self.clear_and_split(line)
+      kwargs = dict(zip(headers, splitted))
 
-        kwargs['username'] = kwargs['first_name'] + '.' + kwargs['last_name']
-        kwargs['password'] = '12345678'
+      kwargs['username'] = kwargs['email']
+      kwargs['password'] = '12345678'
+      kwargs['legacy_id'] = i
 
-        from party_calculator.tasks import create_object
-        create_object.delay(module_name="party_calculator.models", model_name=model, **kwargs)
+      from party_calculator.tasks import create_object
+      create_object.delay(module_name="authModule.models", model_name=model, **kwargs)
       i += 1
 
   def clear_and_split(self, text: str, sep=','):

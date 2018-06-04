@@ -53,21 +53,20 @@
                         <td>{{ order_item.quantity }}</td>
                         <td>{{ order_item.total }}</td>
                         <td>
-                            <form action="{% url 'exclude-food' %}" style="display: inline">
+                            <form action="{% url 'exclude-food' party.id %}" style="display: inline">
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-danger">Exclude</button>
                                 <!--<i class="glyphicon glyphicon-minus-sign"></i>-->
                             </form>
 
-                            <form action="{% url 'include-food' %}" class="form-inline" style="display: inline">
+                            <form action="{% url 'include-food' party.id %}" class="form-inline" style="display: inline">
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-success">Include</button>
                                 <!--<i class="glyphicon glyphicon-plus-sign"></i>-->
                             </form>
                         </td>
                         <td>
-                            <form action="{% url 'remove-food' %}">
-                                    <input type="hidden" name="party" value="{{ party.id }}">
+                            <form action="{% url 'remove-food' party.id %}">
                                     <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                     <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>
@@ -127,8 +126,7 @@
                         <tr>
                             <td>{{ product }}</td>
                             <td>{{ product.price }}</td>
-                            <form action="{% url 'add-food-to-party' %}">
-                                <input type="hidden" name="party" value="{{ party.id }}">
+                            <form action="{% url 'add-food-to-party' party.id %}">
                                 <input type="hidden" name="food" value="{{ product.id }}">
                                 <td><input type="number" min="1" value="1" name="quantity"></td>
                                 <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>

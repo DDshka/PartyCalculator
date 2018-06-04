@@ -23,6 +23,12 @@ def is_party_member(request, party_id: int) -> bool:
   return Membership.objects.filter(profile=profile, party=party).exists()
 
 
+def is_party_admin(request, party_id: int) -> bool:
+  profile = get_profile_by_request(request)
+  party = get_party_by_id(party_id)
+  return Membership.objects.filter(profile=profile, party=party, is_owner=True).exists() or party.created_by == profile
+
+
 def party_order_food(party_id: int, food_id: int, quantity: int):
   party = get_party_by_id(party_id)
   food = get_food_by_id(food_id)

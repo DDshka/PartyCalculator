@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.views import View
 from django.views.generic import TemplateView
 
-from party_calculator.abstracts.party import PartyMemberPermission
+from party_calculator.abstracts.party import PartyMemberPermission, PartyAdminPermission
 from party_calculator.forms import CreatePartyForm
 from party_calculator.models import Food
 
@@ -31,10 +31,10 @@ class HomeView(TemplateView):
 class PartyView(PartyMemberPermission, TemplateView):
   template_name = 'party.html'
 
-  def get_context_data(self, id:int):
+  def get_context_data(self, party_id: int):
     context = {}
 
-    party = get_party_by_id(id)
+    party = get_party_by_id(party_id)
     members = get_party_members(party)
     ordered_food = get_party_ordered_food(party)
 
@@ -59,25 +59,27 @@ class CreatePartyView(View):
       form.save(False)
 
 
-class PartyAddFood(View):
-  def get(self, request):
+class PartyAddFood(PartyAdminPermission, View):
+  def get(self, request, party_id: int):
     food_id = int(request.GET.get('food'))
-    party_id = int(request.GET.get('party'))
     quantity = int(request.GET.get('quantity'))
-
-    # TODO: CHECK THROUGH DECORATOR!!11
-    user = get_profile_by_request(request)
-    party = get_party_by_id(party_id)
-    if not user.membership_set.get(party=party):
-      return HttpResponse("You can`t add food to a party which you are not membered in")
 
     party_order_food(party_id, food_id, quantity)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyExcludeFood(View):
-  def get(self, request):
+class PartyRemoveFood(PartyAdminPermission, View):
+  def get(self, request, **kwargs):
+    order_item_id = int(request.GET.get('order_item'))
+
+    party_remove_from_order(order_item_id)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+class PartyExcludeFood(PartyMemberPermission, View):
+  def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
 
     member_exclude_food(request, order_item_id)
@@ -85,21 +87,10 @@ class PartyExcludeFood(View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-class PartyIncludeFood(View):
-  def get(self, request):
+class PartyIncludeFood(PartyMemberPermission, View):
+  def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
 
     member_include_food(request, order_item_id)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
-class PartyRemoveFood(View):
-  def get(self, request):
-    party_id = int(request.GET.get('party'))
-    order_item_id = int(request.GET.get('order_item'))
-
-    party_remove_from_order(party_id, order_item_id)
-
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
