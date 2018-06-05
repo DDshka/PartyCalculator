@@ -47,6 +47,8 @@
         {% else %}
         <div>
             <h1><a href="{% url 'login' %}">Login</a> | <a href="{% url 'sign-in' %}">Sign in</a></h1>
+                <p><strong>-- OR --</strong></p>
+                <a href="{% url 'social:begin' 'github' %}">Login with GitHub</a><br>
         </div>
         {% endif %}
     </div>

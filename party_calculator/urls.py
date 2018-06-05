@@ -16,6 +16,9 @@ urlpatterns = [
   url(r'^party/(?P<party_id>\d+)/add/food', PartyAddFood.as_view(),
       name='add-food-to-party'),
 
+  url(r'^party/(?P<party_id>\d+)/add/member', PartyAddFood.as_view(),
+      name='invite-member-to-party'),
+
   url(r'^party/(?P<party_id>\d+)/remove/food', PartyRemoveFood.as_view(),
       name='remove-food'),
 

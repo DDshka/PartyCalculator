@@ -7,6 +7,7 @@ from django.views.generic import CreateView
 
 from authModule.forms import LoginForm, SignInForm
 from authModule.models import Profile
+from party_calculator.services.profile import verify_profile
 
 
 class LoginView(View):
@@ -57,6 +58,13 @@ class LogoutView(View):
     logout(request)
     return redirect(reverse_lazy('home'))
 
-  def post(self, request):
-    return HttpResponse("Post is not allowed")
+
+class VerificationView(View):
+  def get(self, request, verification_code):
+    verified = verify_profile(verification_code)
+
+    if verified:
+      return HttpResponse("Your profile successfully activated.")
+    else:
+      return HttpResponse("It seems your profile has been already activated")
 

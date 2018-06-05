@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import widgets
 
 from authModule.models import Profile
 from party_calculator.models import Party, Membership
@@ -33,3 +34,7 @@ class CreatePartyForm(forms.ModelForm):
       membership.save()
 
     return party
+
+
+class AddToPartyForm(forms.Form):
+  userinfo = forms.CharField(max_length=1024, label='User', widget=widgets.TextInput(attrs={'placeholder': 'Enter here either username or his email'}))

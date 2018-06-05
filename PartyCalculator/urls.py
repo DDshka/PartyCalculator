@@ -17,10 +17,14 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import path, include
 
+import party_calculator
 
 urlpatterns = [
   path('admin/', admin.site.urls),
   url(r'^', include('party_calculator.urls')),
-  url(r'^auth/', include('authModule.urls'))
+  url(r'^auth/', include('authModule.urls')),
+  url(r'^oauth/', include('social_django.urls', namespace='social')),
+  url(r'^settings/$', party_calculator.views.settings, name='settings'),
+  url(r'^settings/password/$', party_calculator.views.password, name='password'),
 ]
 

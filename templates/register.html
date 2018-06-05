@@ -4,6 +4,10 @@
     <form action="{% url 'sign-in' %}" method="post">
         {% csrf_token %}
         {{ form }}
+
+        <script src='https://www.google.com/recaptcha/api.js'></script>
+        <div class="g-recaptcha" data-sitekey="6LdtIF0UAAAAACvJ2A7ywuhhY9aV8vjncpwVmAHm"></div>
+
         <button type="submit">Sign in</button>
     </form>
 {% endblock content %}

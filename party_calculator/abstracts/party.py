@@ -1,8 +1,5 @@
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 
 from party_calculator.services.party import is_party_member, is_party_admin
