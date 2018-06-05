@@ -1,12 +1,8 @@
-from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.contrib.auth.forms import PasswordChangeForm, AdminPasswordChangeForm
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
-from social_django.models import UserSocialAuth
 
 from party_calculator.abstracts.party import PartyMemberPermission, PartyAdminPermission
 from party_calculator.forms import CreatePartyForm, AddToPartyForm
@@ -62,8 +58,11 @@ class CreatePartyView(View):
   def post(self, request):
     form = CreatePartyForm(request.user, request.POST)
     if form.is_valid():
-      form.save(False)
-
+      party = form.save()
+      return redirect(reverse('party', kwargs={'party_id': party.id}))
+    else:
+      # TODO: handle party creation form errors
+      return redirect(reverse('home'))
 
 class PartyAddFood(PartyAdminPermission, View):
   def get(self, request, party_id: int):
@@ -76,10 +75,10 @@ class PartyAddFood(PartyAdminPermission, View):
 
 
 class PartyRemoveFood(PartyAdminPermission, View):
-  def get(self, request, **kwargs):
+  def get(self, request, party_id):
     order_item_id = int(request.GET.get('order_item'))
 
-    party_remove_from_order(order_item_id)
+    party_remove_from_order(party_id, order_item_id)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -106,52 +105,3 @@ class PartyIncludeFood(PartyMemberPermission, View):
 #   def get(self, request, party_id: int):
 #     info = request.GET.get('info')
 #     invite_member(party_id, info)
-
-
-@login_required
-def settings(request):
-  user = request.user
-
-  try:
-    github_login = user.social_auth.get(provider='github')
-  except UserSocialAuth.DoesNotExist:
-    github_login = None
-
-  try:
-    twitter_login = user.social_auth.get(provider='twitter')
-  except UserSocialAuth.DoesNotExist:
-    twitter_login = None
-
-  try:
-    facebook_login = user.social_auth.get(provider='facebook')
-  except UserSocialAuth.DoesNotExist:
-    facebook_login = None
-
-  can_disconnect = (user.social_auth.count() > 1 or user.has_usable_password())
-
-  return render(request, 'OAuth_settings.html', {
-    'github_login': github_login,
-    'twitter_login': twitter_login,
-    'facebook_login': facebook_login,
-    'can_disconnect': can_disconnect
-  })
-
-@login_required
-def password(request):
-  if request.user.has_usable_password():
-    PasswordForm = PasswordChangeForm
-  else:
-    PasswordForm = AdminPasswordChangeForm
-
-  if request.method == 'POST':
-    form = PasswordForm(request.user, request.POST)
-    if form.is_valid():
-      form.save()
-      update_session_auth_hash(request, form.user)
-      messages.success(request, 'Your password was successfully updated!')
-      return redirect('password')
-    else:
-      messages.error(request, 'Please correct the error below.')
-  else:
-    form = PasswordForm(request.user)
-  return render(request, 'password.html', {'form': form})

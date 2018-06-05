@@ -4,7 +4,7 @@ import urllib
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse
 
 from authModule.models import Profile, Code
 
@@ -27,22 +27,7 @@ class LoginForm(forms.ModelForm):
   def clean(self):
     super(LoginForm, self)
 
-    ''' Begin reCAPTCHA validation '''
-    recaptcha_response = self.request.POST.get('g-recaptcha-response')
-    url = 'https://www.google.com/recaptcha/api/siteverify'
-    from PartyCalculator import settings
-    values = {
-      'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
-      'response': recaptcha_response
-    }
-    data = urllib.parse.urlencode(values).encode()
-    req = urllib.request.Request(url, data=data)
-    response = urllib.request.urlopen(req)
-    result = json.loads(response.read().decode())
-    ''' End reCAPTCHA validation '''
-
-    if not result['success']:
-      raise ValidationError("Bad captcha. Try again")
+    check_captcha(self.request)
 
     from .methods import auth_user
     username = self.cleaned_data.get('username')
@@ -57,6 +42,10 @@ class SignInForm(forms.ModelForm):
   class Meta:
     model = Profile
     fields = ('username', 'password', 'email',)
+
+  def clean(self):
+    super(SignInForm, self)
+    check_captcha(self.request)
 
   def save(self, commit=True):
     user = super(SignInForm, self).save(commit=False)
@@ -76,3 +65,22 @@ class SignInForm(forms.ModelForm):
     user.save()
 
     return user
+
+
+def check_captcha(request):
+  ''' Begin reCAPTCHA validation '''
+  recaptcha_response = request.POST.get('g-recaptcha-response')
+  url = 'https://www.google.com/recaptcha/api/siteverify'
+  from PartyCalculator import settings
+  values = {
+    'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
+    'response': recaptcha_response
+  }
+  data = urllib.parse.urlencode(values).encode()
+  req = urllib.request.Request(url, data=data)
+  response = urllib.request.urlopen(req)
+  result = json.loads(response.read().decode())
+  ''' End reCAPTCHA validation '''
+
+  if not result['success']:
+    raise ValidationError("Bad captcha. Try again")

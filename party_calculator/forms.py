@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import widgets
 
 from authModule.models import Profile
@@ -16,6 +17,12 @@ class CreatePartyForm(forms.ModelForm):
     self.user = user
     super(CreatePartyForm, self).__init__(*args, **kwargs)
 
+  def clean_name(self):
+    name = self.cleaned_data.get('name')
+    if Party.objects.filter(name=name).exists():
+      raise ValidationError("There can`t be two parties with the same name")
+
+    return name
 
   def save(self, commit=True) -> Party:
     name = self.cleaned_data.get('name')
@@ -24,14 +31,10 @@ class CreatePartyForm(forms.ModelForm):
     creator = Profile.objects.get(id=self.user.id)
 
     party: Party = Party.objects.create(name=name, created_by=creator)
+    Membership.objects.create(profile=creator, party=party, is_owner=True)
 
     for member in members:
-      membership: Membership = Membership.objects.create(profile=member, party=party)
-
-      if member == creator:
-        membership.is_owner = True
-
-      membership.save()
+      Membership.objects.create(profile=member, party=party)
 
     return party
 
