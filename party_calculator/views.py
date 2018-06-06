@@ -10,96 +10,96 @@ from party_calculator.models import Food
 
 from party_calculator.services.calculator import calculate
 from party_calculator.services.party import get_party_by_id, get_party_members, get_party_ordered_food, \
-  party_order_food, member_exclude_food, member_include_food, party_remove_from_order
+    party_order_food, member_exclude_food, member_include_food, party_remove_from_order
 from party_calculator.services.profile import get_profile_by_request, get_profile_parties, \
-  get_profile_administrated_parties
+    get_profile_administrated_parties
 
 
 class HomeView(TemplateView):
-  template_name = 'home.html'
+    template_name = 'home.html'
 
-  def get_context_data(self, **kwargs):
-    context = {}
-    if self.request.user.is_authenticated:
-      profile = get_profile_by_request(self.request)
-      context['parties'] = get_profile_parties(profile)
-      context['adm_parties'] = get_profile_administrated_parties(profile)
-      context['form'] = CreatePartyForm()
+    def get_context_data(self, **kwargs):
+        context = {}
+        if self.request.user.is_authenticated:
+            profile = get_profile_by_request(self.request)
+            context['parties'] = get_profile_parties(profile)
+            context['adm_parties'] = get_profile_administrated_parties(profile)
+            context['form'] = CreatePartyForm()
 
-    return context
+        return context
 
 
 class PartyView(PartyMemberPermission, TemplateView):
-  template_name = 'party.html'
+    template_name = 'party.html'
 
-  def get_context_data(self, party_id: int):
-    context = {}
+    def get_context_data(self, party_id: int):
+        context = {}
 
-    party = get_party_by_id(party_id)
-    members = get_party_members(party)
-    ordered_food = get_party_ordered_food(party)
+        party = get_party_by_id(party_id)
+        members = get_party_members(party)
+        ordered_food = get_party_ordered_food(party)
 
-    calculate(ordered_food, members)
+        calculate(ordered_food, members)
 
-    context['party'] = party
-    context['members'] = members
-    context['ordered_food'] = ordered_food
+        context['party'] = party
+        context['members'] = members
+        context['ordered_food'] = ordered_food
 
-    context['food'] = Food.objects.all()
-    context['add_to_party_form'] = AddToPartyForm()
+        context['food'] = Food.objects.all()
+        context['add_to_party_form'] = AddToPartyForm()
 
-    return context
+        return context
 
 
 class CreatePartyView(View):
-  def get(self, request):
-    pass
+    def get(self, request):
+        pass
 
-  def post(self, request):
-    form = CreatePartyForm(request.user, request.POST)
-    if form.is_valid():
-      party = form.save()
-      return redirect(reverse('party', kwargs={'party_id': party.id}))
-    else:
-      # TODO: handle party creation form errors
-      return redirect(reverse('home'))
+    def post(self, request):
+        form = CreatePartyForm(request.user, request.POST)
+        if form.is_valid():
+            party = form.save()
+            return redirect(reverse('party', kwargs={'party_id': party.id}))
+        else:
+            # TODO: handle party creation form errors
+            return redirect(reverse('home'))
+
 
 class PartyAddFood(PartyAdminPermission, View):
-  def get(self, request, party_id: int):
-    food_id = int(request.GET.get('food'))
-    quantity = int(request.GET.get('quantity'))
+    def get(self, request, party_id: int):
+        food_id = int(request.GET.get('food'))
+        quantity = int(request.GET.get('quantity'))
 
-    party_order_food(party_id, food_id, quantity)
+        party_order_food(party_id, food_id, quantity)
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class PartyRemoveFood(PartyAdminPermission, View):
-  def get(self, request, party_id):
-    order_item_id = int(request.GET.get('order_item'))
+    def get(self, request, party_id):
+        order_item_id = int(request.GET.get('order_item'))
 
-    party_remove_from_order(party_id, order_item_id)
+        party_remove_from_order(party_id, order_item_id)
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class PartyExcludeFood(PartyMemberPermission, View):
-  def get(self, request, **kwargs):
-    order_item_id = int(request.GET.get('order_item'))
+    def get(self, request, **kwargs):
+        order_item_id = int(request.GET.get('order_item'))
 
-    member_exclude_food(request, order_item_id)
+        member_exclude_food(request, order_item_id)
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class PartyIncludeFood(PartyMemberPermission, View):
-  def get(self, request, **kwargs):
-    order_item_id = int(request.GET.get('order_item'))
+    def get(self, request, **kwargs):
+        order_item_id = int(request.GET.get('order_item'))
 
-    member_include_food(request, order_item_id)
+        member_include_food(request, order_item_id)
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 # class PartyInvite(View):
 #   def get(self, request, party_id: int):
