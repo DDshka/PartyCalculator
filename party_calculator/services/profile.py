@@ -4,31 +4,28 @@ from django.shortcuts import get_object_or_404
 from authModule.models import Profile, Code
 
 
-def get_profile_by_request(request) -> Profile:
-  # TODO: Handle anonymous, actually anonymous can do nothing.
-  try:
-    return Profile.objects.get(id=request.user.id)
-  except Profile.DoesNotExist:
-    return request.user
+class ProfileService:
+  def get_by_id(self, profile_id: int) -> Profile:
+    return Profile.objects.get(id=profile_id)
 
+  def get_profile_parties(self, profile: Profile):
+    return profile.memberships.all()
 
-def get_profile_parties(profile: Profile):
-  return profile.memberships.all()
+  def get_profile_administrated_parties(self, profile: Profile):
+    return profile.membership_set.filter(is_owner=True)
 
+  def activate_profile(self, uuid) -> bool:
+    try:
+      code: Code = Code.objects.get(code=uuid)
+    except Code.DoesNotExist:
+      return False
 
-def get_profile_administrated_parties(profile: Profile):
-  return profile.membership_set.filter(is_owner=True)
+    profile: Profile = code.profile
 
+    if profile.is_active:
+      return False
 
-def verify_profile(uuid) -> bool:
-  try:
-    code: Code = Code.objects.get(code=uuid)
-  except Code.DoesNotExist:
-    return False
+    profile.is_active = True
+    profile.save()
 
-  profile: Profile = code.profile
-
-  profile.is_active = True
-  profile.save()
-
-  return True
+    return True

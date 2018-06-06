@@ -12,7 +12,7 @@ from social_django.models import UserSocialAuth
 from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY
 from authModule.forms import LoginForm, SignInForm
 from authModule.models import Profile
-from party_calculator.services.profile import verify_profile
+from party_calculator.services.profile import ProfileService
 
 
 class LoginView(View):
@@ -50,6 +50,7 @@ class SignInView(CreateView):
       return redirect(reverse_lazy('home'))
 
     # TODO: PASS WITH CONTEXT GOOGLE_RECAPTCHA_SITE_KEY
+    kwargs['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
 
     return super(SignInView, self).get(request, *args, **kwargs)
 
@@ -62,33 +63,23 @@ class SignInView(CreateView):
 
 class LogoutView(View):
   def get(self, request):
-    user = request.user
-    try:
-      google_login = user.social_auth.get(provider='google-oauth2')
-    except UserSocialAuth.DoesNotExist:
-      google_login = None
-
     logout(request)
-
-    # just example
-    if google_login:
-      import requests
-      requests.post('https://accounts.google.com/o/oauth2/revoke',
-                    params={'token': google_login.access_token},
-                    headers={'content-type': 'application/x-www-form-urlencoded'})
 
     return redirect(reverse_lazy('home'))
 
 
 class VerificationView(View):
   def get(self, request, verification_code):
-    verified = verify_profile(verification_code)
+    verified = ProfileService().activate_profile(verification_code)
 
     if verified:
       return HttpResponse("Your profile successfully activated.")
     else:
       return HttpResponse("It seems your profile has been already activated")
 
+
+# TODO: recode settings and password methods as classbased views
+# ====================================================================================
 
 
 @login_required
@@ -112,6 +103,7 @@ def settings(request):
     'google_login': google_login,
     'can_disconnect': can_disconnect
   })
+
 
 @login_required
 def password(request):

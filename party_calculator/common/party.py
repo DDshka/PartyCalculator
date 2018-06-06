@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse_lazy
 
-from party_calculator.services.party import is_party_member, is_party_admin
+from party_calculator.services.member import MemberService
 
 
 def logged_in(func):
@@ -25,7 +25,7 @@ class PartyMemberPermission(UserPassesTestMixin):
 
 
   def check_membership(self, party_id):
-    if not is_party_member(self.request, party_id):
+    if not MemberService().is_party_member(self.request.user.id, party_id):
       raise PermissionDenied("You are not a member of this party")
     return True
 
@@ -39,6 +39,6 @@ class PartyAdminPermission(UserPassesTestMixin):
     return self.check_adminship(party_id)
 
   def check_adminship(self, party_id):
-    if not is_party_admin(self.request, party_id):
+    if not MemberService().is_party_admin(self.request.user.id, party_id):
       raise PermissionDenied("You are neither admin or owner of this party")
     return True
