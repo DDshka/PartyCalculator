@@ -40,5 +40,5 @@ class CreatePartyForm(forms.ModelForm):
 
 
 class AddToPartyForm(forms.Form):
-    userinfo = forms.CharField(max_length=1024, label='User', widget=widgets.TextInput(
+    info = forms.CharField(max_length=1024, label='User', widget=widgets.TextInput(
         attrs={'placeholder': 'Enter here either username or his email'}))

@@ -31,9 +31,21 @@
                         <td>{{ member.profile }}</td>
                         <td>{{ member.total_sponsored }}</td>
                         <td>{{ member.actual_expense }}</td>
+                        {% if not member.is_owner %}
+                        <td>
+                            <form action="{% url 'kick-member' party.id %}">
+                                <input type="hidden" name="member" value="{{ member.id }}">
+                                <button type="submit" class="btn btn-danger">Kick</button>
+                            </form>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </table>
+                <form action="{% url 'invite-member' party.id %}">
+                    {{ add_to_party_form.as_p }}
+                    <button type="submit" class="btn btn-success">Invite</button>
+                </form>
             </div>
 
             <div class="col-lg-6">
@@ -116,12 +128,6 @@
                 {% endif %}
             </div>
         </div>
-        
-        <!--<div class="row">-->
-            <!--<div class="col-lg-12">-->
-                <!--<form action=""></form>-->
-            <!--</div>-->
-        <!--</div>-->
         
         <div class="row">
             <div class="col-lg-12">

@@ -3,7 +3,10 @@ import importlib
 from PartyCalculator.celery import app
 
 
-@app.task(name='party_calculator.tasks.create_object')
+@app.task(name='party_calculator.tasks.create_user')
+def create_user(module_name, model_name, **kwargs):
+    create_object(module_name, model_name, **kwargs)
+
 def create_object(module_name, model_name, **kwargs):
     cls = class_for_name(module_name, model_name)
     # obj = cls(**kwargs) # for tests

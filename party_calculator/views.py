@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views import View
@@ -78,7 +78,7 @@ class PartyRemoveFood(PartyAdminPermission, View):
   def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
 
-    PartyService().party_remove_from_order(order_item_id)
+    PartyService().remove_from_order(order_item_id)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -103,7 +103,17 @@ class PartyIncludeFood(PartyMemberPermission, View):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-# class PartyInvite(View):
-#   def get(self, request, party_id: int):
-#     info = request.GET.get('info')
-#     invite_member(party_id, info)
+class PartyInvite(PartyAdminPermission, View):
+  def get(self, request, party_id: int):
+    info = request.GET.get('info')
+    message = PartyService().invite_member(party_id, info)
+
+    return HttpResponse(message)
+
+
+class PartyKickMember(PartyAdminPermission, View):
+  def get(self, request, **kwargs):
+    member_id = request.GET.get('member')
+    PartyService().remove_member_from_party(member_id)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

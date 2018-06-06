@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 
-from party_calculator.models import Membership
+from authModule.models import Profile
+from party_calculator.models import Membership, Party
 from party_calculator.services.order import OrderService
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
@@ -13,9 +14,18 @@ class MemberService:
 
     return get_object_or_404(Membership, profile=profile, party=party)
 
+  def grant_membership(self, party: Party, profile: Profile):
+    Membership.objects.create(profile=profile, party=party)
+
+  def revoke_membership(self, member_id: int):
+    Membership.objects.get(id=member_id).delete()
+
   def is_party_member(self, user_id: int, party_id: int) -> bool:
     profile = ProfileService().get_by_id(user_id)
     party = PartyService().get_by_id(party_id)
+    return Membership.objects.filter(profile=profile, party=party).exists()
+
+  def is_party_member_by_profile_and_party(self, profile: Profile, party: Party) -> bool:
     return Membership.objects.filter(profile=profile, party=party).exists()
 
   def is_party_admin(self, user_id: int, party_id: int) -> bool:
