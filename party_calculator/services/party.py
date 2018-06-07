@@ -24,6 +24,13 @@ class PartyService(Service):
 
     return party
 
+  def set_inactive(self, party: Party):
+    party.state = Party.INACTIVE
+    party.save()
+
+  def is_active(self, party: Party):
+    return True if party.state == Party.ACTIVE else False
+
   def get_party_members(self, party: Party):
     return party.membership_set.all()
 

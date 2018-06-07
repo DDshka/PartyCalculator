@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
-from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
+from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission, is_active
 from party_calculator.forms import CreatePartyForm, AddToPartyForm
 from party_calculator.models import Food
 
@@ -43,6 +43,7 @@ class PartyView(PartyMemberPermission, TemplateView):
     calculate(ordered_food, members)
 
     context['party'] = party
+    context['is_active'] = PartyService().is_active(party)
     context['members'] = members
     context['current_member'] = MemberService().get(profile_id=self.request.user.id, party_id=party_id)
     context['ordered_food'] = ordered_food
@@ -68,6 +69,7 @@ class CreatePartyView(View):
 
 
 class PartyAddFood(PartyAdminPermission, View):
+  @is_active
   def get(self, request, party_id: int):
     food_id = int(request.GET.get('food'))
     quantity = int(request.GET.get('quantity'))
@@ -80,6 +82,7 @@ class PartyAddFood(PartyAdminPermission, View):
 
 
 class PartyRemoveFood(PartyAdminPermission, View):
+  @is_active
   def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
 
@@ -90,6 +93,7 @@ class PartyRemoveFood(PartyAdminPermission, View):
 
 
 class PartyExcludeFood(PartyMemberPermission, View):
+  @is_active
   def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
     user_id = request.user.id
@@ -102,6 +106,7 @@ class PartyExcludeFood(PartyMemberPermission, View):
 
 
 class PartyIncludeFood(PartyMemberPermission, View):
+  @is_active
   def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
     user_id = request.user.id
@@ -114,6 +119,7 @@ class PartyIncludeFood(PartyMemberPermission, View):
 
 
 class PartyInvite(PartyAdminPermission, View):
+  @is_active
   def get(self, request, party_id: int):
     info = request.GET.get('info')
 
@@ -125,6 +131,7 @@ class PartyInvite(PartyAdminPermission, View):
 
 
 class PartyKickMember(PartyAdminPermission, View):
+  @is_active
   def get(self, request, **kwargs):
     member_id = request.GET.get('member')
     member = MemberService().get(id=member_id)
@@ -134,11 +141,21 @@ class PartyKickMember(PartyAdminPermission, View):
 
 
 class PartySponsor(PartyMemberPermission, View):
+  @is_active
   def get(self, request, **kwargs):
     amount = float(request.GET.get('amount'))
     member_id = request.GET.get('member')
 
     member = MemberService().get(id=member_id)
     MemberService().sponsor_party(member, amount)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+class PartyMakeInactive(PartyAdminPermission, View):
+  @is_active
+  def get(self, request, party_id: int):
+    party = PartyService().get(id=party_id)
+    PartyService().set_inactive(party)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

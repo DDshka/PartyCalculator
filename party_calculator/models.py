@@ -12,11 +12,21 @@ class Food(models.Model):
 
 
 class Party(models.Model):
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+
+    states = (
+        (ACTIVE, 'Active'),
+        (INACTIVE, 'Inactive')
+    )
+
     name = models.CharField(max_length=1024, null=False, blank=False)
 
     members = models.ManyToManyField(Profile, through='Membership', related_name='memberships')
     ordered_food = models.ManyToManyField('OrderedFood', related_name='ordered_by')
     created_by = models.ForeignKey(Profile, on_delete=models.DO_NOTHING, related_name='creator')
+    state = models.CharField(max_length=512, choices=states, default=ACTIVE)
+
 
     def __str__(self):
         return self.name

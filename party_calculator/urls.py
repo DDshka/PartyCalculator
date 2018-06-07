@@ -1,7 +1,6 @@
 from django.conf.urls import url
 
-from party_calculator.views import HomeView, CreatePartyView, PartyView, PartyAddFood, PartyExcludeFood, \
-  PartyIncludeFood, PartyRemoveFood, PartyInvite, PartyKickMember, PartySponsor
+from party_calculator.views import *
 
 urlpatterns = [
   url(r'^$', HomeView.as_view(),
@@ -33,4 +32,7 @@ urlpatterns = [
 
   url(r'^party/(?P<party_id>\d+)/sponsor', PartySponsor.as_view(),
       name='sponsor-party'),
+
+  url(r'^party/(?P<party_id>\d+)/inactive', PartyMakeInactive.as_view(),
+      name='party-set-inactive'),
 ]

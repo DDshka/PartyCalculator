@@ -15,18 +15,25 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-4">
-                <h1>{{ party }}</h1>
+                <h1>{{ party }} | {% if not is_active %} Inactive {% endif %}</h1>
+                {% if is_active %}
+                    <form action="{% url 'party-set-inactive' party.id %}">
+                        <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
+                    </form>
+                {% endif %}
             </div>
             <div class="col-lg-4">
 
             </div>
             <div class="col-lg-4">
+                {% if is_active %}
                 <form action="{% url 'sponsor-party' party.id %}">
                     <label for="amount">Amount:</label>
                     <input type="hidden" name="member" value="{{ current_member.id }}">
                     <input type="text" id="amount" name="amount" value="0">
                     <button type="submit" class="btn btn-success">Sponsor</button>
                 </form>
+                {% endif %}
             </div>
         </div>
 
@@ -44,21 +51,25 @@
                         <td>{{ member.profile }}</td>
                         <td>{{ member.total_sponsored }}</td>
                         <td>{{ member.actual_expense }}</td>
-                        {% if not member.is_owner %}
-                        <td>
-                            <form action="{% url 'kick-member' party.id %}">
-                                <input type="hidden" name="member" value="{{ member.id }}">
-                                <button type="submit" class="btn btn-danger">Kick</button>
-                            </form>
-                        </td>
+                        {% if is_active %}
+                            {% if not member.is_owner %}
+                            <td>
+                                <form action="{% url 'kick-member' party.id %}">
+                                    <input type="hidden" name="member" value="{{ member.id }}">
+                                    <button type="submit" class="btn btn-danger">Kick</button>
+                                </form>
+                            </td>
+                            {% endif %}
                         {% endif %}
                     </tr>
                     {% endfor %}
                 </table>
+                {% if is_active %}
                 <form action="{% url 'invite-member' party.id %}">
                     {{ add_to_party_form.as_p }}
                     <button type="submit" class="btn btn-success">Invite</button>
                 </form>
+                {% endif %}
             </div>
 
             <div class="col-lg-6">
@@ -77,6 +88,7 @@
                         <td>{{ order_item.price }}</td>
                         <td>{{ order_item.quantity }}</td>
                         <td>{{ order_item.total }}</td>
+                        {% if is_active %}
                         <td>
                             {% if order_item.excluded %}
                             <form action="{% url 'include-food' party.id %}" class="form-inline" style="display: inline">
@@ -98,6 +110,7 @@
                                     <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>
                         </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </table>
@@ -143,7 +156,8 @@
                 {% endif %}
             </div>
         </div>
-        
+
+        {% if is_active %}
         <div class="row">
             <div class="col-lg-12">
                 {% if food %}
@@ -166,6 +180,6 @@
                 {% endif %}
             </div>
         </div>
-
+        {% endif %}
     </div>
 {% endblock content %}

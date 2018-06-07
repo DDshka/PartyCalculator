@@ -10,7 +10,7 @@ class DjangoUser {
 
 class Party {
   String name
-  Enum ('active', 'inactive')
+  Enum _state ('active', 'inactive')
   Profile created_by
 }
 
