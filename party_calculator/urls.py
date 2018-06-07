@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from party_calculator.views import HomeView, CreatePartyView, PartyView, PartyAddFood, PartyExcludeFood, \
-  PartyIncludeFood, PartyRemoveFood, PartyInvite, PartyKickMember
+  PartyIncludeFood, PartyRemoveFood, PartyInvite, PartyKickMember, PartySponsor
 
 urlpatterns = [
   url(r'^$', HomeView.as_view(),
@@ -30,4 +30,7 @@ urlpatterns = [
 
   url(r'^party/(?P<party_id>\d+)/include/food', PartyIncludeFood.as_view(),
       name='include-food'),
+
+  url(r'^party/(?P<party_id>\d+)/sponsor', PartySponsor.as_view(),
+      name='sponsor-party'),
 ]

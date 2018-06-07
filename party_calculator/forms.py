@@ -4,6 +4,8 @@ from django.forms import widgets
 
 from authModule.models import Profile
 from party_calculator.models import Party, Membership
+from party_calculator.services.party import PartyService
+from party_calculator.services.profile import ProfileService
 
 
 class CreatePartyForm(forms.ModelForm):
@@ -28,17 +30,12 @@ class CreatePartyForm(forms.ModelForm):
         name = self.cleaned_data.get('name')
         members = self.cleaned_data.get('members')
 
-        creator = Profile.objects.get(id=self.user.id)
-
-        party: Party = Party.objects.create(name=name, created_by=creator)
-        Membership.objects.create(profile=creator, party=party, is_owner=True)
-
-        for member in members:
-            Membership.objects.create(profile=member, party=party)
+        creator = ProfileService().get(id=self.user.id)
+        party = PartyService().create(name=name, creator=creator, members=members)
 
         return party
 
 
 class AddToPartyForm(forms.Form):
-    info = forms.CharField(max_length=1024, label='User', widget=widgets.TextInput(
-        attrs={'placeholder': 'Enter here either username or his email'}))
+    info = forms.CharField(max_length=1024, label='User info', widget=widgets.TextInput(
+        attrs={'placeholder': 'Enter here username/email'}))

@@ -9,7 +9,9 @@ from party_calculator.forms import CreatePartyForm, AddToPartyForm
 from party_calculator.models import Food
 
 from party_calculator.services.calculator import calculate
+from party_calculator.services.food import FoodService
 from party_calculator.services.member import MemberService
+from party_calculator.services.order import OrderService
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
 
@@ -20,7 +22,7 @@ class HomeView(TemplateView):
   def get_context_data(self, **kwargs):
     context = {}
     if self.request.user.is_authenticated:
-      profile = ProfileService().get_by_id(self.request.user.id)
+      profile = ProfileService().get(id=self.request.user.id)
       context['parties'] = ProfileService().get_profile_parties(profile)
       context['adm_parties'] = ProfileService().get_profile_administrated_parties(profile)
       context['form'] = CreatePartyForm()
@@ -34,7 +36,7 @@ class PartyView(PartyMemberPermission, TemplateView):
   def get_context_data(self, party_id: int):
     context = {}
 
-    party = PartyService().get_by_id(party_id)
+    party = PartyService().get(id=party_id)
     members = PartyService().get_party_members(party)
     ordered_food = PartyService().get_party_ordered_food(party)
 
@@ -42,6 +44,7 @@ class PartyView(PartyMemberPermission, TemplateView):
 
     context['party'] = party
     context['members'] = members
+    context['current_member'] = MemberService().get(profile_id=self.request.user.id, party_id=party_id)
     context['ordered_food'] = ordered_food
 
     context['food'] = Food.objects.all()
@@ -69,7 +72,9 @@ class PartyAddFood(PartyAdminPermission, View):
     food_id = int(request.GET.get('food'))
     quantity = int(request.GET.get('quantity'))
 
-    PartyService().party_order_food(party_id, food_id, quantity)
+    party = PartyService().get(id=party_id)
+    food = FoodService().get(id=food_id)
+    PartyService().order_food(party, food, quantity)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -78,7 +83,8 @@ class PartyRemoveFood(PartyAdminPermission, View):
   def get(self, request, **kwargs):
     order_item_id = int(request.GET.get('order_item'))
 
-    PartyService().remove_from_order(order_item_id)
+    order_item = OrderService().get(id=order_item_id)
+    PartyService().remove_from_order(order_item)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -88,7 +94,9 @@ class PartyExcludeFood(PartyMemberPermission, View):
     order_item_id = int(request.GET.get('order_item'))
     user_id = request.user.id
 
-    MemberService().member_exclude_food(user_id, order_item_id)
+    profile = ProfileService().get(id=user_id)
+    order_item = OrderService().get(id=order_item_id)
+    MemberService().member_exclude_food(profile, order_item)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -98,7 +106,9 @@ class PartyIncludeFood(PartyMemberPermission, View):
     order_item_id = int(request.GET.get('order_item'))
     user_id = request.user.id
 
-    MemberService().member_include_food(user_id, order_item_id)
+    profile = ProfileService().get(id=user_id)
+    order_item = OrderService().get(id=order_item_id)
+    MemberService().member_include_food(profile, order_item)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -106,7 +116,10 @@ class PartyIncludeFood(PartyMemberPermission, View):
 class PartyInvite(PartyAdminPermission, View):
   def get(self, request, party_id: int):
     info = request.GET.get('info')
-    message = PartyService().invite_member(party_id, info)
+
+    ps = PartyService()
+    party = ps.get(id=party_id)
+    message = ps.invite_member(party, info)
 
     return HttpResponse(message)
 
@@ -114,6 +127,18 @@ class PartyInvite(PartyAdminPermission, View):
 class PartyKickMember(PartyAdminPermission, View):
   def get(self, request, **kwargs):
     member_id = request.GET.get('member')
-    PartyService().remove_member_from_party(member_id)
+    member = MemberService().get(id=member_id)
+    PartyService().remove_member_from_party(member)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+class PartySponsor(PartyMemberPermission, View):
+  def get(self, request, **kwargs):
+    amount = float(request.GET.get('amount'))
+    member_id = request.GET.get('member')
+
+    member = MemberService().get(id=member_id)
+    MemberService().sponsor_party(member, amount)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

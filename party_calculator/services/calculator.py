@@ -23,6 +23,7 @@ def calculate(ordered_food, members):
         for order_item in ordered_food:
             if order_item in excluded_order_items:
                 order_item.ppl_count -= 1
+                order_item.excluded = True
 
         # after we got how many people will consume each product we can get actual expense
         for order_item in ordered_food:

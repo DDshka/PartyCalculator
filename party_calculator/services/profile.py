@@ -1,21 +1,14 @@
 from authModule.models import Profile, Code
+from party_calculator.common.service import Service
 
 
-class ProfileService:
-  def get_by_id(self, profile_id: int) -> Profile:
-    return Profile.objects.get(id=profile_id)
+class ProfileService(Service):
 
-  def get_by_email(self, email: str) -> Profile:
+  model = Profile
+
+  def get(self, **kwargs) -> model:
     try:
-      result = Profile.objects.get(email=email)
-    except Profile.DoesNotExist:
-      result = None
-
-    return result
-
-  def get_by_username(self, username: str) -> Profile:
-    try:
-      result = Profile.objects.get(username=username)
+      result = super(ProfileService, self).get(**kwargs)
     except Profile.DoesNotExist:
       result = None
 

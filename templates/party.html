@@ -14,7 +14,20 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <h1>{{ party }}</h1>
+            <div class="col-lg-4">
+                <h1>{{ party }}</h1>
+            </div>
+            <div class="col-lg-4">
+
+            </div>
+            <div class="col-lg-4">
+                <form action="{% url 'sponsor-party' party.id %}">
+                    <label for="amount">Amount:</label>
+                    <input type="hidden" name="member" value="{{ current_member.id }}">
+                    <input type="text" id="amount" name="amount" value="0">
+                    <button type="submit" class="btn btn-success">Sponsor</button>
+                </form>
+            </div>
         </div>
 
         <div class="row">
@@ -65,17 +78,19 @@
                         <td>{{ order_item.quantity }}</td>
                         <td>{{ order_item.total }}</td>
                         <td>
-                            <form action="{% url 'exclude-food' party.id %}" style="display: inline">
-                                <input type="hidden" name="order_item" value="{{ order_item.id }}">
-                                <button type="submit" class="btn btn-danger">Exclude</button>
-                                <!--<i class="glyphicon glyphicon-minus-sign"></i>-->
-                            </form>
-
+                            {% if order_item.excluded %}
                             <form action="{% url 'include-food' party.id %}" class="form-inline" style="display: inline">
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-success">Include</button>
                                 <!--<i class="glyphicon glyphicon-plus-sign"></i>-->
                             </form>
+                            {% else %}
+                            <form action="{% url 'exclude-food' party.id %}" style="display: inline">
+                                <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                <button type="submit" class="btn btn-danger">Exclude</button>
+                                <!--<i class="glyphicon glyphicon-minus-sign"></i>-->
+                            </form>
+                            {% endif %}
                         </td>
                         <td>
                             <form action="{% url 'remove-food' party.id %}">
