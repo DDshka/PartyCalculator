@@ -10,8 +10,8 @@ class DjangoUser {
 
 class Party {
   String name
-  Enum _state ('active', 'inactive')
   Profile created_by
+  Enum _state ('active', 'inactive')
 }
 
 class Food {
@@ -20,16 +20,15 @@ class Food {
 }
 
 class Membership {
-  Integer member_id
+  Integer profile_id
   Integer party_id
-  Integer member_food_exclude_id
   Boolean is_owner
   Decimal total_sponsored
 }
 
 class MemberFoodExclude {
   Integer membership_id
-  Integer orderedFood_id
+  Integer ordered_food_id
 }
 
 class OrderedFood {
@@ -39,8 +38,8 @@ class OrderedFood {
   Integer quantity
 }
 
-
 DjangoUser "1" *-- "1" Profile
+
 
 Profile "1" *-- "many" Membership
 Membership "1" *-- "many" MemberFoodExclude

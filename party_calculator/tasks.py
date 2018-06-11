@@ -7,6 +7,7 @@ from PartyCalculator.celery import app
 def create_user(module_name, model_name, **kwargs):
     create_object(module_name, model_name, **kwargs)
 
+
 def create_object(module_name, model_name, **kwargs):
     cls = class_for_name(module_name, model_name)
     # obj = cls(**kwargs) # for tests

@@ -15,7 +15,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-4">
-                <h1>{{ party }} | {% if not is_active %} Inactive {% endif %}</h1>
+                <h1>{{ party }}{% if not is_active %} | Inactive {% endif %}</h1>
                 {% if is_active %}
                     <form action="{% url 'party-set-inactive' party.id %}">
                         <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
@@ -105,7 +105,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <form action="{% url 'remove-food' party.id %}">
+                            <form action="{% url 'remove-food-from-party' party.id %}">
                                     <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                     <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>

@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class AuthConfig(AppConfig):
-    name = 'authModule'
+    name = 'party_calculator_auth'

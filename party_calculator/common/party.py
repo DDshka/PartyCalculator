@@ -8,59 +8,43 @@ from party_calculator.services.profile import ProfileService
 
 
 def logged_in(func):
-  def wrapper(*args, **kwargs):
-    if not args[0].request.user.is_authenticated:
-      return False
-    else:
-      return func(*args, **kwargs)
+    def wrapper(*args, **kwargs):
+        if not args[0].request.user.is_authenticated:
+            return False
 
-  return wrapper
+        return func(*args, **kwargs)
 
-
-def is_active(func):
-  def wrapper(*args, **kwargs):
-    party_id = kwargs.get('party_id')
-
-    ps = PartyService()
-    party = ps.get(id=party_id)
-    if not ps.is_active(party):
-      raise PermissionDenied("You cannot modify inactive party")
-    else:
-      return func(*args, **kwargs)
-
-  return wrapper
+    return wrapper
 
 
 class PartyMemberPermission(UserPassesTestMixin):
-  login_url = reverse_lazy('login')
+    login_url = reverse_lazy('login')
 
-  @logged_in
-  def test_func(self):
-    party_id = self.kwargs.get('party_id')
-    return self.check_membership(party_id)
+    @logged_in
+    def test_func(self):
+        party_id = self.kwargs.get('party_id')
+        return self.check_membership(party_id)
 
+    def check_membership(self, party_id):
+        profile = ProfileService().get(id=self.request.user.id)
+        party = PartyService().get(id=party_id)
 
-  def check_membership(self, party_id):
-    profile = ProfileService().get(id=self.request.user.id)
-    party = PartyService().get(id=party_id)
-
-    if not MemberService().is_party_member(profile, party):
-      raise PermissionDenied("You are not a member of this party")
-    return True
+        if not MemberService().is_party_member(profile, party):
+            raise PermissionDenied("You are not a member of this party")
+        return True
 
 
 class PartyAdminPermission(UserPassesTestMixin):
-  login_url = reverse_lazy('login')
+    login_url = reverse_lazy('login')
 
-  @logged_in
-  def test_func(self):
-    party_id = self.kwargs.get('party_id')
-    return self.check_adminship(party_id)
+    @logged_in
+    def test_func(self):
+        party_id = self.kwargs.get('party_id')
+        return self.check_adminship(party_id)
 
-  def check_adminship(self, party_id):
-    profile = ProfileService().get(id=self.request.user.id)
-    party = PartyService().get(id=party_id)
-    if not MemberService().is_party_admin(profile, party):
-      raise PermissionDenied("You are neither admin or owner of this party")
-    return True
-
+    def check_adminship(self, party_id):
+        profile = ProfileService().get(id=self.request.user.id)
+        party = PartyService().get(id=party_id)
+        if not MemberService().is_party_admin(profile, party):
+            raise PermissionDenied("You are neither admin or owner of this party")
+        return True

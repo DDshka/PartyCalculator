@@ -3,4 +3,4 @@ from party_calculator.models import Food
 
 
 class FoodService(Service):
-  model = Food
+    model = Food

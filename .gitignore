@@ -113,3 +113,4 @@ out
 gen
 /virtualenv/
 /db.json
+/.env

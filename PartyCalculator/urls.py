@@ -17,14 +17,13 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import path, include
 
-from authModule.views import settings, password
+from party_calculator_auth.views import settings, password
 
 urlpatterns = [
-  path('admin/', admin.site.urls),
-  url(r'^', include('party_calculator.urls')),
-  url(r'^auth/', include('authModule.urls')),
-  url(r'^oauth/', include('social_django.urls', namespace='social')),
-  url(r'^settings/$', settings, name='settings'),
-  url(r'^settings/password/$', password, name='password'),
+    path('admin/', admin.site.urls),
+    url(r'^', include('party_calculator.urls')),
+    url(r'^auth/', include('party_calculator_auth.urls')),
+    url(r'^oauth/', include('social_django.urls', namespace='social')),
+    url(r'^settings/$', settings, name='settings'),
+    url(r'^settings/password/$', password, name='password'),
 ]
-

@@ -1,0 +1,45 @@
+@startuml
+class TemplateParty {
+  String name
+  Profile created_by
+}
+
+class TemplateMembers {
+  Integer profile_id
+  Integer template_party_id
+  Boolean is_owner
+}
+
+class TemplateMemberFoodExclude {
+  Integer template_membership_id
+  Integer ordered_food_id
+}
+
+class TemplateOrderedFood {
+  Integer template_party_id
+  String food_name
+  Decimal price_per_unit
+  Integer quantity
+}
+
+class ActiveTemplates {
+  Integer template_party_id
+  Integer frequency_id
+}
+
+class Frequency {
+  String hour (0-23) (*)
+  String minute (0-59) (*)
+  String day (1-31 (depends on month)) (*)
+  String month (1-12) (*)
+  String day_of_week (1-7) (*)
+}
+
+TemplateParty "1" --* "many" TemplateMembers
+TemplateMembers "1" --* "many" TemplateMemberFoodExclude
+TemplateParty "1" --* "many" TemplateOrderedFood
+TemplateOrderedFood "1" --* "many" TemplateMemberFoodExclude
+
+TemplateParty "1" --* "many" ActiveTemplates
+ActiveTemplates "1" --- "1" Frequency
+@enduml

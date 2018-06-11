@@ -39,10 +39,19 @@
         <div class="row">
             <form action="{% url 'create-party' %}" method="post">
                 {% csrf_token %}
-                {{ form }}
+                {{ create_party_form }}
                 <button type="submit">Create new party</button>
             </form>
         </div>
+
+        <div class="row">
+            <form action="{% url 'create-party-from-existing' %}" method="post">
+                {% csrf_token %}
+                {{ create_party_from_existing_form }}
+                <button type="submit">Create new party</button>
+            </form>
+        </div>
+
 
         {% else %}
         <div>

@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand
+
 from party_calculator.tasks import create_user
 
 
@@ -28,7 +29,7 @@ class Command(BaseCommand):
             kwargs['password'] = '12345678'
             kwargs['legacy_id'] = i
 
-            create_user.delay(module_name="authModule.models", model_name=model, **kwargs)
+            create_user.delay(module_name="party_calculator_auth.models", model_name=model, **kwargs)
             i += 1
 
     def clear_and_split(self, text: str, sep=','):

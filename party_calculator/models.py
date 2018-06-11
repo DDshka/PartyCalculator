@@ -1,6 +1,8 @@
 from django.db import models
 
-from authModule.models import Profile
+from party_calculator_auth.models import Profile
+
+
 
 
 class Food(models.Model):
@@ -26,7 +28,6 @@ class Party(models.Model):
     ordered_food = models.ManyToManyField('OrderedFood', related_name='ordered_by')
     created_by = models.ForeignKey(Profile, on_delete=models.DO_NOTHING, related_name='creator')
     state = models.CharField(max_length=512, choices=states, default=ACTIVE)
-
 
     def __str__(self):
         return self.name
