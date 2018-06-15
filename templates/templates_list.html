@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <form action="{% url 'create-template' %}" method="POST">
+                    {% csrf_token %}
+                    {{ create_template_form }}
+                    <button class="btn btn-success">Create</button>
+                </form>
+                {% if templates %}
+                    <table class="table">
+                        <caption><h1>Your templated</h1></caption>
+                        {% for template in templates %}
+                            <tr>
+                                <td><a href="{% url 'template' template.id %}">{{ template.name }}</a></td>
+                                 <td>
+                                    <form action="{% url 'delete-template' template.id %}">
+                                        <button type="submit" class="btn btn-danger">Delete template</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <h1>You have no templates</h1>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

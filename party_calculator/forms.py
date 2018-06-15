@@ -2,9 +2,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import widgets
 
-from party_calculator.models import Party
+from party_calculator.models import Party, Food, TemplateParty
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
+from party_calculator.services.template_party import TemplatePartyService
 
 
 class CreatePartyForm(forms.ModelForm):
@@ -86,3 +87,22 @@ class CreatePartyFromExistingForm(forms.ModelForm):
 class AddToPartyForm(forms.Form):
     info = forms.CharField(max_length=1024, label='Username', widget=widgets.TextInput(
         attrs={'placeholder': 'Enter here username'}))
+
+
+class CreateTemplateForm(CreatePartyForm):
+    food = forms.ModelMultipleChoiceField(queryset=Food.objects.all())
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if TemplatePartyService().filter(name=name).exists():
+            raise ValidationError("Template with such name already exists")
+
+        return name
+
+    def save(self, commit=True) -> TemplateParty:
+        name = self.cleaned_data.get('name')
+        members = self.cleaned_data.get('members')
+        food = self.cleaned_data.get('food')
+
+        creator = ProfileService().get(id=self.user.id)
+        return TemplatePartyService().create(name=name, creator=creator, members=members, food=food)

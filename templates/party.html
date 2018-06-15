@@ -21,6 +21,16 @@
                         <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
                     </form>
                 {% endif %}
+
+                {% if not has_template %}
+                <form action="{% url 'create-template-from-party' party.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn">Make a template from this party</button>
+                </form>
+                {% endif %}
+                <form action="{% url 'delete-party' party.id %}">
+                    <button type="submit" class="btn btn-danger">Delete party</button>
+                </form>
             </div>
             <div class="col-lg-4">
 

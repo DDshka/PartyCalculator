@@ -20,4 +20,10 @@ services:
   redis:
     image: redis:3.2
     ports:
-      - "6300:6379"
+      - "6379:6379"
+  celery-worker:
+#    build: .
+    command: celery -A PartyCalculator beat -l DEBUG --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  celery-beat:
+#    build: .
+    command: celery -A PartyCalculator worker -l INFO

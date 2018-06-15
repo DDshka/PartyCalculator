@@ -5,3 +5,15 @@ class PartyCalculatorException(Exception):
 
 class MemberAlreadyInParty(PartyCalculatorException):
     pass
+
+
+class NoSuchPartyState(PartyCalculatorException):
+    pass
+
+
+class TemplatePartyScheduleIsNotSet(PartyCalculatorException):
+    pass
+
+
+class NoSuchTemplatePartyState(PartyCalculatorException):
+    pass

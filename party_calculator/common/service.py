@@ -10,8 +10,14 @@ class Service():
 
         return self.model.objects.all()
 
+    def filter(self, **kwargs):
+        return self.model.objects.filter(**kwargs)
+
     def create(self, **kwargs) -> model:
         return self.model.objects.create(**kwargs)
 
-    def delete(self, model_obj):
-        model_obj.delete()
+    def create_nosave(self, **kwargs) -> model:
+        return self.model(**kwargs)
+
+    def delete(self, obj: model):
+        obj.delete()

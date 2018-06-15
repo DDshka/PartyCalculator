@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h1>{{ template }}</h1>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <form action="{% url 'template-set-frequency' template.id %}">
+                    <input type="text" name="pattern">
+                    <button type="submit" class="btn">Set frequency</button>
+                </form>
+            </div>
+
+            <div class="col-lg-6">
+                {% if is_active %}
+                <form action="{% url 'template-set-inactive' template.id %}">
+                    <button class="btn btn-danger">Set inactive</button>
+                </form>
+                {% else %}
+                <form action="{% url 'template-set-active' template.id %}">
+                    <button class="btn btn-success">Set active</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <form action="{% url 'template-add-member' template.id %}">
+                    {{ add_to_party_form }}
+                    <button type="submit" class="btn btn-success">Add</button>
+                </form>
+                <table class="table">
+                    <caption><h2>Members</h2></caption>
+                    <thead>
+                        <th>Member</th>
+                    </thead>
+                    {% for member in members %}
+                    <tr>
+                        <td>{{ member.profile }}</td>
+                        <td>
+                            {% if not template.created_by == member.profile %}
+                            <form action="{% url 'template-kick-member' template.id %}">
+                                <input type="hidden" name="member" value="{{ member.id }}">
+                                <button type="submit" class="btn btn-danger">Kick</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                        {% if not template.created_by == member.profile %}
+                            {% if member.is_owner %}
+                                <form action="{% url 'template-revoke-ownership' template.id %}">
+                                    <input type="hidden" name="member" value="{{ member.id }}">
+                                    <button type="submit" class="btn btn-danger">Revoke ownership</button>
+                                </form>
+                            </td>
+                            {% elif not member.is_owner %}
+                            <td>
+                                <form action="{% url 'template-grant-ownership' template.id %}">
+                                    <input type="hidden" name="member" value="{{ member.id }}">
+                                    <button type="submit" class="btn btn-success">Grant ownership</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="col-lg-6">
+                <table class="table">
+                    <caption><h2>Order</h2></caption>
+                     <thead>
+                        <th>Product</th>
+                        <th>PPU</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </thead>
+                    {% for order_item in ordered_food %}
+                    <tr>
+                        <td>{{ order_item }}</td>
+                        <td>{{ order_item.price }}</td>
+                        <td>{{ order_item.quantity }}</td>
+                        <td>{{ order_item.total }}</td>
+                         <td>
+                            <form action="{% url 'template-remove-food' template.id %}">
+                                    <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                    <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% if food %}
+                    <table class="table">
+                        <caption><h2>Available food</h2></caption>
+                        {% for product in food %}
+                        <tr>
+                            <td>{{ product }}</td>
+                            <td>{{ product.price }}</td>
+                            <form action="{% url 'template-add-food' template.id %}">
+                                <input type="hidden" name="food" value="{{ product.id }}">
+                                <td><input type="number" min="1" value="1" name="quantity"></td>
+                                <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <h1>YOU ARE IN THE SOVIET UNION</h1>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

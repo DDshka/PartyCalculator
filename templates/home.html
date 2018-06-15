@@ -52,6 +52,17 @@
             </form>
         </div>
 
+        <div class="row">
+            <h1><a href="{% url 'templates' %}">Templates</a></h1>
+        </div>
+
+        <div class="row">
+            <form action="{% url 'create-party-from-template' %}" method="post">
+                {% csrf_token %}
+                <input type="text" name="template">
+                <button type="submit" class="btn">Create from template</button>
+            </form>
+        </div>
 
         {% else %}
         <div>

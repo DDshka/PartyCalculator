@@ -7,16 +7,16 @@ class MemberService(Service):
     model = Membership
 
     def grant_membership(self, party: Party, profile: Profile):
-        Membership.objects.create(profile=profile, party=party)
+        self.model.objects.create(profile=profile, party=party)
 
-    def revoke_membership(self, member: Membership):
+    def revoke_membership(self, member: model):
         member.delete()
 
     def is_party_member(self, profile: Profile, party: Party) -> bool:
-        return Membership.objects.filter(profile=profile, party=party).exists()
+        return self.model.objects.filter(profile=profile, party=party).exists()
 
     def is_party_admin(self, profile: Profile, party: Party) -> bool:
-        return Membership.objects.filter(profile=profile, party=party, is_owner=True).exists() \
+        return self.model.objects.filter(profile=profile, party=party, is_owner=True).exists() \
                or party.created_by == profile
 
     def member_exclude_food(self, profile: Profile, order_item: OrderedFood):

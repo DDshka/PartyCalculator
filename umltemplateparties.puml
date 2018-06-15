@@ -2,6 +2,8 @@
 class TemplateParty {
   String name
   Profile created_by
+  State _state
+  Integer frequency_id
 }
 
 class TemplateMembers {
@@ -22,24 +24,18 @@ class TemplateOrderedFood {
   Integer quantity
 }
 
-class ActiveTemplates {
-  Integer template_party_id
-  Integer frequency_id
-}
-
 class Frequency {
-  String hour (0-23) (*)
-  String minute (0-59) (*)
-  String day (1-31 (depends on month)) (*)
-  String month (1-12) (*)
-  String day_of_week (1-7) (*)
+  String name
+  String hour
+  String minute
+  String day
+  String month
+  String day_of_week
 }
 
 TemplateParty "1" --* "many" TemplateMembers
 TemplateMembers "1" --* "many" TemplateMemberFoodExclude
 TemplateParty "1" --* "many" TemplateOrderedFood
 TemplateOrderedFood "1" --* "many" TemplateMemberFoodExclude
-
-TemplateParty "1" --* "many" ActiveTemplates
-ActiveTemplates "1" --- "1" Frequency
+TemplateParty "1" --* "many" Frequency
 @enduml

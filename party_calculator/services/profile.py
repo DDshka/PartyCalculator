@@ -14,7 +14,7 @@ class ProfileService(Service):
         return result
 
     def get_profile_parties(self, profile: Profile):
-        return profile.memberships.all()
+        return profile.member_of.all()
 
     def get_profile_administrated_parties(self, profile: Profile):
         return profile.membership_set.filter(is_owner=True)

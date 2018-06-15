@@ -1,4 +1,9 @@
 @startuml
+enum State {
+  ACTIVE
+  INACTIVE
+}
+
 class Profile {
   String name
   String email
@@ -11,7 +16,8 @@ class DjangoUser {
 class Party {
   String name
   Profile created_by
-  Enum _state ('active', 'inactive')
+  State _state
+  Integer template_party_id
 }
 
 class Food {
@@ -38,12 +44,12 @@ class OrderedFood {
   Integer quantity
 }
 
-DjangoUser "1" *-- "1" Profile
-
+DjangoUser "1" --- "1" Profile
 
 Profile "1" *-- "many" Membership
 Membership "1" *-- "many" MemberFoodExclude
 Membership "many" *-- "1" Party
 Party "1" --* "many" OrderedFood
 Party "1" *-- "1" Profile
+TemplateParty "1" --* "many" Party
 @enduml

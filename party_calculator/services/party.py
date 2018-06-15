@@ -1,4 +1,6 @@
 import decimal
+import time
+from datetime import datetime
 
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -6,8 +8,8 @@ from django.core.mail import send_mail
 from PartyCalculator.settings import WEBSITE_URL, HOST
 from party_calculator_auth.models import Profile
 from party_calculator.common.service import Service
-from party_calculator.exceptions import MemberAlreadyInParty
-from party_calculator.models import Party, Food, Membership, OrderedFood
+from party_calculator.exceptions import MemberAlreadyInParty, NoSuchPartyState
+from party_calculator.models import Party, Food, Membership, OrderedFood, TemplateParty
 from party_calculator.services.member import MemberService
 from party_calculator.services.order import OrderService
 from party_calculator.services.profile import ProfileService
@@ -16,7 +18,7 @@ from party_calculator.services.profile import ProfileService
 class PartyService(Service):
     model = Party
 
-    def create(self, name, creator, members=None) -> Party:
+    def create(self, name, creator, members=None) -> model:
         if not members:
             members = []
 
@@ -29,27 +31,67 @@ class PartyService(Service):
 
         return party
 
-    def set_inactive(self, party: Party):
+    def create_from_template(self, template: TemplateParty) -> model:
+        # import pytz
+        # ptz = pytz.timezone('Europe/Kiev')
+        # t2 = datetime.now()
+        # t3 = ptz.localize(t2)
+        # t4 = datetime.now(pytz.utc)
+        from party_calculator.services.template_party import TemplatePartyService
+        template_name = template.name.replace(TemplatePartyService.TEMPLATE_PREFIX, '')
+        party_name = '{0} | {1}'.format(
+            template_name,
+            time.strftime("%d.%m.%Y:%H:%M")
+        )
+
+        party = super(PartyService, self).create(name=party_name, created_by=template.created_by, template=template)
+
+        party_food = {}
+        os = OrderService()
+        for order_item in template.template_ordered_food.all():
+            item = os.create(party=party, name=order_item.name, price=order_item.price, quantity=order_item.quantity)
+            party_food[item.name] = item
+
+        ms = MemberService()
+        for template_member in template.template_memberships.all():
+            is_owner = True if template_member.profile == party.created_by else False
+            member = ms.create(profile=template_member.profile, party=party, is_owner=is_owner)
+
+            for template_excluded_food in template_member.excluded_food.all():
+                food = party_food[template_excluded_food.name]
+                member.excluded_food.add(food)
+
+        return party
+
+    def set_state(self, party: model, state):
         self.check_is_party_active(party)
 
-        party.state = Party.INACTIVE
+        if state not in [x for (x, y) in self.model.states]:
+            raise NoSuchPartyState()
+
+        party.state = state
         party.save()
 
-    def is_active(self, party: Party):
-        return True if party.state == Party.ACTIVE else False
+    def is_active(self, party: model):
+        return True if party.state == self.model.ACTIVE else False
 
-    def get_party_members(self, party: Party):
-        return party.membership_set.all()
+    def has_template(self, party: Party) -> bool:
+        return True if party.template else False
 
-    def get_party_profiles(self, party: Party, excluding=None):
+    def get_party_members(self, party: model, excluding=None):
+        if excluding:
+            return party.memberships.exclude(**excluding)
+        return party.memberships.all()
+
+    def get_party_profiles(self, party: model, excluding=None):
         if excluding:
             return party.members.exclude(**excluding)
         return party.members.all()
 
-    def get_party_ordered_food(self, party: Party):
+    def get_party_ordered_food(self, party: model):
         return party.orderedfood_set.all()
 
-    def add_member_to_party(self, party: Party, profile: Profile):
+    def add_member_to_party(self, party: model, profile: Profile):
         self.check_is_party_active(party)
 
         MemberService().grant_membership(party, profile)
@@ -59,7 +101,7 @@ class PartyService(Service):
 
         MemberService().revoke_membership(member)
 
-    def order_food(self, party: Party, food: Food, quantity: int):
+    def order_food(self, party: model, food: Food, quantity: int):
         self.check_is_party_active(party)
 
         OrderService().create_or_update_order_item(party, food, quantity)
@@ -75,7 +117,7 @@ class PartyService(Service):
         member.total_sponsored += decimal.Decimal(amount)
         member.save()
 
-    def invite_member(self, party: Party, info: str):
+    def invite_member(self, party: model, info: str):
         self.check_is_party_active(party)
 
         profile = ProfileService().get(username=info)
@@ -99,6 +141,6 @@ class PartyService(Service):
         # We will add member without confirmation for now but check console for a message
         self.add_member_to_party(party, profile)
 
-    def check_is_party_active(self, party: Party):
+    def check_is_party_active(self, party: model):
         if not self.is_active(party):
             raise PermissionDenied("You cannot modify inactive party")

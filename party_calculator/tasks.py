@@ -1,6 +1,7 @@
-import importlib
-
 from PartyCalculator.celery import app
+from party_calculator.services.party import PartyService
+from party_calculator.services.template_party import TemplatePartyService
+from party_calculator.utils import create_object
 
 
 @app.task(name='party_calculator.tasks.create_user')
@@ -8,13 +9,8 @@ def create_user(module_name, model_name, **kwargs):
     create_object(module_name, model_name, **kwargs)
 
 
-def create_object(module_name, model_name, **kwargs):
-    cls = class_for_name(module_name, model_name)
-    # obj = cls(**kwargs) # for tests
-    cls.objects.create(**kwargs)
+@app.task(name='party_calculator.tasks.create_party')
+def create_party(template_id):
+    template = TemplatePartyService().get(id=template_id)
 
-
-def class_for_name(module_name, class_name):
-    module = importlib.import_module(module_name)
-    cls = getattr(module, class_name)
-    return cls
+    PartyService().create_from_template(template)
