@@ -124,7 +124,7 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_NAME', 'postgres'),
         'USER': os.environ.get('POSTGRES_USER', 'postgres'),
         'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5442'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5400'),
     }
 }
 
