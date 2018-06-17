@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
+from django.db import transaction
 
 from PartyCalculator.settings import WEBSITE_URL, HOST
 from party_calculator_auth.models import Profile
@@ -31,12 +32,8 @@ class PartyService(Service):
 
         return party
 
+    @transaction.atomic
     def create_from_template(self, template: TemplateParty) -> model:
-        # import pytz
-        # ptz = pytz.timezone('Europe/Kiev')
-        # t2 = datetime.now()
-        # t3 = ptz.localize(t2)
-        # t4 = datetime.now(pytz.utc)
         from party_calculator.services.template_party import TemplatePartyService
         template_name = template.name.replace(TemplatePartyService.TEMPLATE_PREFIX, '')
         party_name = '{0} | {1}'.format(

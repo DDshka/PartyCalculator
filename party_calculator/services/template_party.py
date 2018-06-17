@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from party_calculator.common.service import Service
 from party_calculator.exceptions import MemberAlreadyInParty, \
     NoSuchTemplatePartyState
@@ -15,6 +17,7 @@ class TemplatePartyService(Service):
 
     TEMPLATE_PREFIX = 'Template'
 
+    @transaction.atomic()
     def create(self, name, creator, members=None, food=None):
         if not members:
             members = []
@@ -38,6 +41,7 @@ class TemplatePartyService(Service):
 
         return template_party
 
+    @transaction.atomic
     def create_from_existing(self, party: Party) -> TemplateParty:
         template_name = self.get_template_name(party)
         template_party = super(TemplatePartyService, self).create(name=template_name, created_by=party.created_by)
@@ -66,6 +70,9 @@ class TemplatePartyService(Service):
 
     def is_active(self, template: model):
         return True if template.state == self.model.ACTIVE else False
+
+    def has_active_parties(self, template: TemplateParty):
+        return template.parties.filter(state=Party.ACTIVE).exists()
 
     def get_template_members(self, template: model):
         return template.template_memberships.all()

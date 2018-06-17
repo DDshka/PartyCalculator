@@ -19,6 +19,7 @@ class AbstractParty(models.Model):
     name = models.CharField(max_length=1024, null=False, blank=False)
     created_by = models.ForeignKey(Profile, on_delete=models.DO_NOTHING)
     state = models.CharField(max_length=512, choices=states, default=ACTIVE)
+    duration = models.DurationField(null=True)
 
     def __str__(self):
         return self.name
@@ -72,7 +73,10 @@ class Membership(AbstractMembership):
 class Party(AbstractParty):
     members = models.ManyToManyField(Profile, through=Membership, related_name='member_of')
     ordered_food = models.ManyToManyField(OrderedFood, related_name='ordered_by')
-    template = models.ForeignKey("TemplateParty", null=True, on_delete=models.SET_NULL)
+    template = models.ForeignKey("TemplateParty", null=True, on_delete=models.SET_NULL, related_name='parties')
+
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
 
 
 class TemplateOrderedFood(AbstractOrderedFood):
@@ -89,7 +93,7 @@ class TemplateMembership(AbstractMembership):
 
 class TemplateParty(AbstractParty):
     members = models.ManyToManyField(Profile, through=TemplateMembership, related_name='template_member_of')
-    ordered_food = models.ManyToManyField(TemplateOrderedFood, related_name='template_member_of')
+    ordered_food = models.ManyToManyField(TemplateOrderedFood, related_name='template_order_of')
     schedule = models.ForeignKey(CrontabSchedule, null=True, on_delete=models.SET_NULL)
     state = models.CharField(max_length=512, choices=AbstractParty.states, default=AbstractParty.INACTIVE)
 

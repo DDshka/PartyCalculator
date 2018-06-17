@@ -17,3 +17,7 @@ class TemplatePartyScheduleIsNotSet(PartyCalculatorException):
 
 class NoSuchTemplatePartyState(PartyCalculatorException):
     pass
+
+
+class TemplatePartyHasActiveRelatedParty(PartyCalculatorException):
+    pass

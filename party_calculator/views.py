@@ -398,6 +398,7 @@ class OmegaLul(View):
     def post(self, request, **kwargs):
         template_id = request.POST.get('template')
         template = TemplatePartyService().get(id=template_id)
+
         PartyService().create_from_template(template)
 
         return HttpResponse('ZDAROVA')
