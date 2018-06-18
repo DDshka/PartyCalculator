@@ -20,7 +20,6 @@ class Command(BaseCommand):
         headers = self.clear_and_split(file.readline())
 
         i = 1
-        # todo why don't just use enumerate(...)
         for line in file:
             splitted = self.clear_and_split(line)
             kwargs = dict(zip(headers, splitted))

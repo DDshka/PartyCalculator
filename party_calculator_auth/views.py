@@ -9,10 +9,10 @@ from django.views import View
 from django.views.generic import CreateView
 from social_django.models import UserSocialAuth
 
-from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY
+from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY, CAPTCHA_ENABLED
+from party_calculator.services.profile import ProfileService
 from party_calculator_auth.forms import LoginForm, SignInForm
 from party_calculator_auth.models import Profile
-from party_calculator.services.profile import ProfileService
 
 
 class LoginView(View):
@@ -44,6 +44,7 @@ class LoginView(View):
             context['form'] = kwargs['form']
         except KeyError:
             context['form'] = LoginForm()
+        context['captcha_enabled'] = CAPTCHA_ENABLED
         context['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
         return context
 
@@ -79,6 +80,7 @@ class SignInView(CreateView):
             context['form'] = kwargs['form']
         except KeyError:
             context['form'] = SignInForm()
+        context['captcha_enabled'] = CAPTCHA_ENABLED
         context['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
         return context
 
