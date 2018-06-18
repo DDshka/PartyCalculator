@@ -1,6 +1,16 @@
 version: '3'
 
 services:
+#  web:
+#    build: .
+#    command: python3 manage.py runserver 0.0.0.0:8000
+#    ports:
+#      - "8000:8000"
+#    env_file:
+#      - .env
+#    depends_on:
+#      - db
+#      - redis
   db:
     image: postgres:9.6
     env_file:
@@ -10,4 +20,4 @@ services:
   redis:
     image: redis:3.2
     ports:
-      - "6300:6379"
+      - "6379:6379"

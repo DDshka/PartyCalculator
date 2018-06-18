@@ -56,8 +56,6 @@ INSTALLED_APPS = [
     'party_calculator_auth',
 ]
 
-# celery -A proj beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -107,18 +105,6 @@ WSGI_APPLICATION = 'PartyCalculator.wsgi.application'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    # 'default': dj_database_url.config(
-    #   default=config('DATABASE_URL')
-    # )
-    # 'default': {
-    #   'ENGINE': 'django.db.backends.postgresql',
-    #   'HOST': 'localhost',
-    #   'NAME': 'PartyCalculator',
-    #   'PORT': 5432,
-    #   'USER': 'postgres',
-    #   'PASSWORD': 'admin',
-    #   'DATABASE': 'PartyCalculator'
-    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRES_NAME', 'postgres'),
@@ -168,10 +154,7 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = os.path.join('static')
 STATIC_URL = '/static/'
 
-# Extra places for collectstatic to find static files.
-# STATICFILES_DIRS = (
-#     os.path.join('static'),
-# )
+
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 # REDIS related settings
