@@ -1,6 +1,3 @@
-"""
-Management utility to create superusers.
-"""
 from django.contrib.auth.management.commands.createsuperuser \
     import Command as CreateSuperUserCommand
 
