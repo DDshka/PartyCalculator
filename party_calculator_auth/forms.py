@@ -29,7 +29,7 @@ class LoginForm(forms.ModelForm):
 
         check_captcha(self.request)
 
-        from .methods import auth_user
+        from party_calculator_auth.services.auth import auth_user
         username = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
         # TODO: raise exceptions (NoSuchUser, ProfileInactive) in auth_user and handle here

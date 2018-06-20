@@ -5,7 +5,7 @@ from django.views import View
 from django.views.generic import TemplateView, ListView
 
 from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
-from party_calculator.exceptions import MemberAlreadyInParty
+from party_calculator.exceptions import MemberAlreadyInPartyException
 from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
     CreateTemplateForm
 from party_calculator.models import Food, TemplateParty, Party
@@ -171,7 +171,7 @@ class PartyInvite(PartyAdminPermission, View):
             ps.invite_member(party, info)
         except Profile.DoesNotExist:
             message = 'Such user does not found'
-        except MemberAlreadyInParty:
+        except MemberAlreadyInPartyException:
             message = 'This member is already in party'
 
         return HttpResponse(message)
@@ -295,7 +295,7 @@ class TemplateAddMemberView(View):
         except Profile.DoesNotExist:
             message = 'Such user does not found'
             return HttpResponse(message)
-        except MemberAlreadyInParty:
+        except MemberAlreadyInPartyException:
             message = 'This member is already in template'
             return HttpResponse(message)
 

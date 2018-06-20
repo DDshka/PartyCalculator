@@ -3,7 +3,7 @@ import json
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 from party_calculator.common.service import Service
-from party_calculator.exceptions import TemplatePartyScheduleIsNotSet
+from party_calculator.exceptions import TemplatePartyScheduleIsNotSetException
 from party_calculator.models import TemplateParty
 
 
@@ -42,7 +42,7 @@ class ScheduleService(Service):
             schedule = template.schedule
 
             if not schedule:
-                raise TemplatePartyScheduleIsNotSet()
+                raise TemplatePartyScheduleIsNotSetException()
 
             task = PeriodicTask.objects.create(name=self.get_schedule_name(template),
                                                crontab=schedule,

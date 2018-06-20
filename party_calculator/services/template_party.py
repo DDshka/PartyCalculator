@@ -1,8 +1,8 @@
 from django.db import transaction
 
 from party_calculator.common.service import Service
-from party_calculator.exceptions import MemberAlreadyInParty, \
-    NoSuchTemplatePartyState
+from party_calculator.exceptions import MemberAlreadyInPartyException, \
+    NoSuchTemplatePartyStateException
 from party_calculator.models import TemplateParty, Membership, OrderedFood, Food, Party
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
@@ -87,7 +87,7 @@ class TemplatePartyService(Service):
             raise Profile.DoesNotExist()
 
         if TemplateMemberService().is_party_member(profile, template):
-            raise MemberAlreadyInParty(
+            raise MemberAlreadyInPartyException(
                 "User {0} (id={1}) is already in {2} (id={3})"
                     .format(profile.username, profile.id, template.name, template.id)
             )
@@ -106,7 +106,7 @@ class TemplatePartyService(Service):
     def set_state(self, template: model, state):
         allowed_states = (TemplateParty.ACTIVE, TemplateParty.INACTIVE)
         if state not in allowed_states:
-            raise NoSuchTemplatePartyState()
+            raise NoSuchTemplatePartyStateException()
 
         state_for_periodic_task = True if state == TemplateParty.ACTIVE else False
         ScheduleService().set_periodic_task_enabled(template, state_for_periodic_task)

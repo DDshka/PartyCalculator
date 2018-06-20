@@ -6,7 +6,7 @@ from django.db import transaction
 
 from PartyCalculator.settings import WEBSITE_URL, HOST
 from party_calculator.common.service import Service
-from party_calculator.exceptions import MemberAlreadyInParty, NoSuchPartyState
+from party_calculator.exceptions import MemberAlreadyInPartyException, NoSuchPartyStateException
 from party_calculator.models import Party, Food, Membership, OrderedFood, TemplateParty
 from party_calculator.services.member import MemberService
 from party_calculator.services.order import OrderService
@@ -62,7 +62,7 @@ class PartyService(Service):
         self.check_is_party_active(party)
 
         if state not in [x for (x, y) in self.model.states]:
-            raise NoSuchPartyState()
+            raise NoSuchPartyStateException()
 
         party.state = state
         party.save()
@@ -121,7 +121,7 @@ class PartyService(Service):
             raise Profile.DoesNotExist()
 
         if MemberService().is_party_member(profile, party):
-            raise MemberAlreadyInParty(
+            raise MemberAlreadyInPartyException(
                 "User {0} (id={1}) is already in {2} (id={3})"
                 .format(profile.username, profile.id, party.name, party.id)
             )
