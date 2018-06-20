@@ -17,16 +17,20 @@ from party_calculator_auth.models import Profile
 class PartyService(Service):
     model = Party
 
+    def __init__(self):
+        self.member_service = MemberService()
+        self.order_service = OrderService()
+        self.profile_service = ProfileService()
+
     def create(self, name, creator, members=None) -> model:
         if not members:
             members = []
 
         party = super(PartyService, self).create(name=name, created_by=creator)
 
-        ms = MemberService()
-        ms.create(profile=creator, party=party, is_owner=True)
+        self.member_service.create(profile=creator, party=party, is_owner=True)
         for member in members:
-            ms.create(profile=member, party=party)
+            self.member_service.create(profile=member, party=party)
 
         return party
 
@@ -39,18 +43,23 @@ class PartyService(Service):
             time.strftime("%d.%m.%Y:%H:%M")
         )
 
-        party = super(PartyService, self).create(name=party_name, created_by=template.created_by, template=template)
+        party = super(PartyService, self).create(name=party_name,
+                                                 created_by=template.created_by,
+                                                 template=template)
 
         party_food = {}
-        os = OrderService()
         for order_item in template.template_ordered_food.all():
-            item = os.create(party=party, name=order_item.name, price=order_item.price, quantity=order_item.quantity)
+            item = self.order_service.create(party=party,
+                                             name=order_item.name,
+                                             price=order_item.price,
+                                             quantity=order_item.quantity)
             party_food[item.name] = item
 
-        ms = MemberService()
         for template_member in template.template_memberships.all():
             is_owner = True if template_member.profile == party.created_by else False
-            member = ms.create(profile=template_member.profile, party=party, is_owner=is_owner)
+            member = self.member_service.create(profile=template_member.profile,
+                                                party=party,
+                                                is_owner=is_owner)
 
             for template_excluded_food in template_member.excluded_food.all():
                 food = party_food[template_excluded_food.name]
@@ -89,22 +98,22 @@ class PartyService(Service):
     def add_member_to_party(self, party: model, profile: Profile):
         self.check_is_party_active(party)
 
-        MemberService().grant_membership(party, profile)
+        self.member_service.grant_membership(party, profile)
 
     def remove_member_from_party(self, member: Membership):
         self.check_is_party_active(member.party)
 
-        MemberService().revoke_membership(member)
+        self.member_service.revoke_membership(member)
 
     def order_food(self, party: model, food: Food, quantity: int):
         self.check_is_party_active(party)
 
-        OrderService().create_or_update_order_item(party, food, quantity)
+        self.order_service.create_or_update_order_item(party, food, quantity)
 
     def remove_from_order(self, order_item: OrderedFood):
         self.check_is_party_active(order_item.party)
 
-        OrderService().delete(order_item)
+        self.order_service.delete(order_item)
 
     def sponsor_party(self, member: Membership, amount: float):
         self.check_is_party_active(member.party)
@@ -115,12 +124,12 @@ class PartyService(Service):
     def invite_member(self, party: model, info: str):
         self.check_is_party_active(party)
 
-        profile = ProfileService().get(username=info)
+        profile = self.profile_service.get(username=info)
 
         if not profile:
             raise Profile.DoesNotExist()
 
-        if MemberService().is_party_member(profile, party):
+        if self.member_service.is_party_member(profile, party):
             raise MemberAlreadyInPartyException(
                 "User {0} (id={1}) is already in {2} (id={3})"
                 .format(profile.username, profile.id, party.name, party.id)
