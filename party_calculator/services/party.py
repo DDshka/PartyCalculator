@@ -1,19 +1,18 @@
 import decimal
 import time
-from datetime import datetime
 
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.db import transaction
 
 from PartyCalculator.settings import WEBSITE_URL, HOST
-from party_calculator_auth.models import Profile
 from party_calculator.common.service import Service
 from party_calculator.exceptions import MemberAlreadyInParty, NoSuchPartyState
 from party_calculator.models import Party, Food, Membership, OrderedFood, TemplateParty
 from party_calculator.services.member import MemberService
 from party_calculator.services.order import OrderService
 from party_calculator.services.profile import ProfileService
+from party_calculator.tasks import send_mail
+from party_calculator_auth.models import Profile
 
 
 class PartyService(Service):
@@ -129,11 +128,11 @@ class PartyService(Service):
             )
 
         join_url = '/party/invite/someID'
-        send_mail("Party calculator: You are invited to {0}".format(party.name),
-                  "Proceed this link to join the Party and start becoming drunk\n"
-                  "{0}{1}".format(WEBSITE_URL, join_url),
-                  "admin@{0}".format(HOST),
-                  [profile.email])
+        send_mail.delay("Party calculator: You are invited to {0}".format(party.name),
+                        "Proceed this link to join the Party and start becoming drunk\n"
+                        "{0}{1}".format(WEBSITE_URL, join_url),
+                        "admin@{0}".format(HOST),
+                        [profile.email])
 
         # We will add member without confirmation for now but check console for a message
         self.add_member_to_party(party, profile)

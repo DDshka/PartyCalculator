@@ -1,4 +1,5 @@
 from celery.utils.log import get_task_logger
+from django.core.mail import send_mail as django_send_mail
 
 from PartyCalculator.celery import app
 from party_calculator.exceptions import TemplatePartyHasActiveRelatedParty
@@ -23,3 +24,8 @@ def create_party(template_id):
         raise TemplatePartyHasActiveRelatedParty()
 
     PartyService().create_from_template(template)
+
+
+@app.task(name='party_calculator.tasks.send_mail')
+def send_mail(*args, **kwargs):
+    django_send_mail(*args, **kwargs)

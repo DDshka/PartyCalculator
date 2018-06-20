@@ -3,11 +3,12 @@ import urllib
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.urls import reverse
 
 from PartyCalculator.settings import CAPTCHA_ENABLED
+from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile, Code
+from party_calculator_auth.views import VerificationView
 
 
 class LoginForm(forms.ModelForm):
@@ -77,13 +78,13 @@ class SignInForm(forms.ModelForm):
         user.verification = Code.objects.create()
 
         from PartyCalculator.settings import HOST, WEBSITE_URL
-        verification_url = reverse('verification',
+        verification_url = reverse(VerificationView.name,
                                    kwargs={'verification_code': user.verification.code})
-        send_mail("Party calculator: Activation code",
-                  "Proceed this link to make your profile active and start becoming drunk\n"
-                  "{0}{1}".format(WEBSITE_URL, verification_url),
-                  "admin@{0}".format(HOST),
-                  [user.email])
+        send_mail.delay("Party calculator: Activation code",
+                        "Proceed this link to make your profile active and start becoming drunk\n"
+                        "{0}{1}".format(WEBSITE_URL, verification_url),
+                        "admin@{0}".format(HOST),
+                        [user.email])
 
         user.save()
 
