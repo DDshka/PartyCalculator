@@ -11,3 +11,7 @@ def auth_user(request, username, password):
         return None
 
     return user
+
+
+def auth_user_by_profile(request, profile: Profile) -> None:
+    login(request, profile)

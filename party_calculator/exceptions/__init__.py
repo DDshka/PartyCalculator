@@ -21,3 +21,7 @@ class NoSuchTemplatePartyState(PartyCalculatorException):
 
 class TemplatePartyHasActiveRelatedParty(PartyCalculatorException):
     pass
+
+
+class OAuthException(PartyCalculatorException):
+    pass

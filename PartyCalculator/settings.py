@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'django_celery_beat',
+    'rest_framework',
     'social_django',
 
     'party_calculator',
@@ -193,6 +194,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_user',
     # 'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
+    # 'party_calculator_auth.pipelines.create_user',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
