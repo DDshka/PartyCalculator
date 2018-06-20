@@ -8,7 +8,6 @@ from django.urls import reverse
 from PartyCalculator.settings import CAPTCHA_ENABLED
 from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile, Code
-from party_calculator_auth.views import VerificationView
 
 
 class LoginForm(forms.ModelForm):
@@ -33,6 +32,7 @@ class LoginForm(forms.ModelForm):
         from .methods import auth_user
         username = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
+        # TODO: raise exceptions (NoSuchUser, ProfileInactive) in auth_user and handle here
         logged = auth_user(self.request, username, password)
 
         if not logged:
@@ -78,6 +78,7 @@ class SignInForm(forms.ModelForm):
         user.verification = Code.objects.create()
 
         from PartyCalculator.settings import HOST, WEBSITE_URL
+        from party_calculator_auth.views import VerificationView
         verification_url = reverse(VerificationView.name,
                                    kwargs={'verification_code': user.verification.code})
         send_mail.delay("Party calculator: Activation code",

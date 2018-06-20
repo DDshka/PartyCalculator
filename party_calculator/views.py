@@ -4,13 +4,10 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView, ListView
 
-from party_calculator.services.template_member import TemplateMemberService
-from party_calculator.services.template_order import TemplateOrderService
-from party_calculator.services.template_party import TemplatePartyService
-from party_calculator_auth.models import Profile
 from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
 from party_calculator.exceptions import MemberAlreadyInParty
-from party_calculator.forms import CreatePartyForm, AddToPartyForm, CreatePartyFromExistingForm, CreateTemplateForm
+from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
+    CreateTemplateForm
 from party_calculator.models import Food, TemplateParty, Party
 from party_calculator.services.calculator import calculate
 from party_calculator.services.food import FoodService
@@ -18,6 +15,10 @@ from party_calculator.services.member import MemberService
 from party_calculator.services.order import OrderService
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
+from party_calculator.services.template_member import TemplateMemberService
+from party_calculator.services.template_order import TemplateOrderService
+from party_calculator.services.template_party import TemplatePartyService
+from party_calculator_auth.models import Profile
 
 
 class HomeView(TemplateView):
@@ -64,7 +65,7 @@ class PartyView(PartyMemberPermission, TemplateView):
         context['ordered_food'] = ordered_food
 
         context['food'] = Food.objects.all()
-        context['add_to_party_form'] = AddToPartyForm()
+        context['add_to_party_form'] = AddMemberToPartyForm()
 
         return context
 
@@ -275,7 +276,7 @@ class TemplatePartyView(TemplateView):
         context['ordered_food'] = template_ordered_food
 
         context['food'] = Food.objects.all()
-        context['add_to_party_form'] = AddToPartyForm()
+        context['add_to_party_form'] = AddMemberToPartyForm()
 
         return context
 

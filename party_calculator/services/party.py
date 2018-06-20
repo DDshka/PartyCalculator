@@ -11,7 +11,6 @@ from party_calculator.models import Party, Food, Membership, OrderedFood, Templa
 from party_calculator.services.member import MemberService
 from party_calculator.services.order import OrderService
 from party_calculator.services.profile import ProfileService
-from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile
 
 
@@ -128,6 +127,7 @@ class PartyService(Service):
             )
 
         join_url = '/party/invite/someID'
+        from party_calculator.tasks import send_mail
         send_mail.delay("Party calculator: You are invited to {0}".format(party.name),
                         "Proceed this link to join the Party and start becoming drunk\n"
                         "{0}{1}".format(WEBSITE_URL, join_url),

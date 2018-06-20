@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import widgets
 
-from party_calculator.models import Party, Food, TemplateParty
+from party_calculator.models import Party, Food, TemplateParty, OrderedFood
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
 from party_calculator.services.template_party import TemplatePartyService
@@ -84,7 +84,7 @@ class CreatePartyFromExistingForm(forms.ModelForm):
         return ps.create(name=name, creator=creator, members=members)
 
 
-class AddToPartyForm(forms.Form):
+class AddMemberToPartyForm(forms.Form):
     info = forms.CharField(max_length=1024, label='Username', widget=widgets.TextInput(
         attrs={'placeholder': 'Enter here username'}))
 
@@ -105,4 +105,18 @@ class CreateTemplateForm(CreatePartyForm):
         food = self.cleaned_data.get('food')
 
         creator = ProfileService().get(id=self.user.id)
-        return TemplatePartyService().create(name=name, creator=creator, members=members, food=food)
+        return TemplatePartyService().create(name=name,
+                                             creator=creator,
+                                             members=members,
+                                             food=food)
+
+
+class AddFoodToPartyForm(forms.ModelForm):
+    class Meta:
+        model = OrderedFood
+        fields = ('__all__')
+
+    def save(self, commit=True):
+        name = self.cleaned_data.get('name')
+        price = self.cleaned_data.get('price')
+        quantity = self.cleaned_data.get('name')
