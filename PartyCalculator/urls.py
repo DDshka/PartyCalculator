@@ -17,7 +17,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import path, include
 
-from party_calculator_auth.views import settings, password
+from party_calculator_auth.views import settings as auth_settings, password
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +28,6 @@ urlpatterns = [
 
     url(r'^api/', include('party_calculator_api.urls')),
 
-    url(r'^settings/$', settings, name='settings'),
+    url(r'^settings/$', auth_settings, name='settings'),
     url(r'^settings/password/$', password, name='password'),
 ]

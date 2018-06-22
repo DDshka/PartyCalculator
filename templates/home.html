@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 
+{% block meta %}
+    {{ block.super }}
+    {% load static %}
+{% endblock meta %}
 {% block title %} Home {% endblock title %}
 
 {% block content %}
@@ -37,9 +41,9 @@
         </div>
 
         <div class="row">
-            <form action="{% url 'create-party' %}" method="post">
+            <form action="{% url 'create-party' %}" method="post" id="create-party-form">
                 {% csrf_token %}
-                {{ create_party_form }}
+                {{ create_party_form.as_p }}
                 <button type="submit">Create new party</button>
             </form>
         </div>

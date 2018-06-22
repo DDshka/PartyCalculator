@@ -15,10 +15,22 @@ class CreatePartyForm(forms.ModelForm):
 
     user = None
 
+    # member_0 = forms.CharField()
+
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
 
         super(CreatePartyForm, self).__init__(*args, **kwargs)
+
+        self.fields['name'].label = ''
+        self.fields['name'].widget = forms.widgets.TextInput(
+            attrs={'placeholder': 'Enter party name here...'}
+        )
+
+        # self.fields['member_0'].label = ''
+        # self.fields['member_0'].widget = forms.widgets.TextInput(
+        #     attrs={'placeholder': 'Enter username here...'}
+        # )
 
         self.fields['members'].required = False
         self.fields['members'].queryset = ProfileService().get_all(excluding={'id': self.user.id})
@@ -38,6 +50,22 @@ class CreatePartyForm(forms.ModelForm):
         party = PartyService().create(name=name, creator=creator, members=members)
 
         return party
+
+    # helper = FormHelper()
+    # helper.form_action = reverse_lazy('create-party')
+    # helper.form_class = 'form-horizontal'
+    # helper.layout = Layout(
+    #     Div(
+    #         Field('name', css_class='form-control'),
+    #     ),
+    #     HTML('<strong>Fill the fields below with member names </strong>'),
+    #     Div(
+    #         Field('member_0', css_class='form-control'),
+    #     ),
+    #     FormActions(
+    #         Submit('create_party', 'Create party', css_class="btn-primary"),
+    #     )
+    # )
 
 
 class CreatePartyFromExistingForm(forms.ModelForm):

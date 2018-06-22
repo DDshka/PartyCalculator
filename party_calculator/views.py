@@ -35,7 +35,7 @@ class HomeView(TemplateView):
             context['parties'] = profile_service.get_profile_parties(profile)
             context['adm_parties'] = profile_service.get_profile_administrated_parties(profile)
             context['create_party_form'] = CreatePartyForm(user=self.request.user)
-            context['create_party_from_existing_form'] = CreatePartyFromExistingForm()
+            context['create_party_from_existing_form'] = CreatePartyFromExistingForm(user=self.request.user)
 
         return context
 
@@ -87,7 +87,7 @@ class PartyCreateFromExisting(View):
     name = 'create-party-from-existing'
 
     def post(self, request):
-        form = CreatePartyFromExistingForm(request.user, request.POST)
+        form = CreatePartyFromExistingForm(request.POST, user=request.user)
         if not form.is_valid():
             return redirect(reverse('home'))
 
