@@ -1,6 +1,6 @@
-from party_calculator_auth.models import Profile
 from party_calculator.common.service import Service
 from party_calculator.models import Membership, Party, OrderedFood
+from party_calculator_auth.models import Profile
 
 
 class MemberService(Service):
@@ -11,6 +11,10 @@ class MemberService(Service):
 
     def revoke_membership(self, member: model):
         member.delete()
+
+    def set_owner(self, member: Membership, is_owner: bool):
+        member.is_owner = is_owner
+        member.save()
 
     def is_party_member(self, profile: Profile, party: Party) -> bool:
         return self.model.objects.filter(profile=profile, party=party).exists()

@@ -17,34 +17,37 @@
         <div class="row">
             <div class="col-lg-4">
                 <h1>{{ party }}{% if not is_active %} | Inactive {% endif %}</h1>
-                {% if is_active %}
-                    <form action="{% url 'party-set-inactive' party.id %}">
-                        <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
+                {% if current_member.is_owner %}
+                    {% if is_active %}
+                        <form action="{% url 'party-set-inactive' party.id %}">
+                            <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
+                        </form>
+                    {% endif %}
+
+                    {% if not has_template %}
+                    <form action="{% url 'create-template-from-party' party.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn">Make a template from this party</button>
+                    </form>
+                    {% endif %}
+
+                    <form action="{% url 'delete-party' party.id %}">
+                        <button type="submit" class="btn btn-danger">Delete party</button>
                     </form>
                 {% endif %}
-
-                {% if not has_template %}
-                <form action="{% url 'create-template-from-party' party.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn">Make a template from this party</button>
-                </form>
-                {% endif %}
-                <form action="{% url 'delete-party' party.id %}">
-                    <button type="submit" class="btn btn-danger">Delete party</button>
-                </form>
             </div>
             <div class="col-lg-4">
 
             </div>
             <div class="col-lg-4">
                 {% if is_active %}
-                {% crispy sponsor_party_form %}
+                    {% crispy sponsor_party_form %}
                 {% endif %}
             </div>
         </div>
 
         <div class="row">
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <table class="table">
                     <caption><h2>Members</h2></caption>
                     <thead>
@@ -58,13 +61,31 @@
                         <td>{{ member.total_sponsored }}</td>
                         <td>{{ member.actual_expense }}</td>
                         {% if is_active %}
-                            {% if not member.is_owner %}
-                            <td>
-                                <form action="{% url 'kick-member' party.id %}">
-                                    <input type="hidden" name="member" value="{{ member.id }}">
-                                    <button type="submit" class="btn btn-danger">Kick</button>
-                                </form>
-                            </td>
+                            {% if current_member.is_owner and member.profile != party.created_by %}
+                                {% if current_member.is_owner %}
+                                    <td>
+                                        <form action="{% url 'kick-member' party.id %}">
+                                            <input type="hidden" name="member" value="{{ member.id }}">
+                                            <button type="submit" class="btn btn-danger">Kick</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+
+                                {% if member.is_owner %}
+                                    <td>
+                                        <form action="{% url 'party-revoke-ownership' party.id %}">
+                                            <input type="hidden" name="member" value="{{ member.id }}">
+                                            <button type="submit" class="btn btn-danger">Revoke ownership</button>
+                                        </form>
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        <form action="{% url 'party-grant-ownership' party.id %}">
+                                            <input type="hidden" name="member" value="{{ member.id }}">
+                                            <button type="submit" class="btn btn-success">Grant ownership</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
                     </tr>
@@ -120,8 +141,9 @@
                 {% else %}
                     <h1>Party ordered nothing for now</h1>
                 {% endif %}
-
-                {% crispy add_custom_food_to_party_form %}
+                {% if is_active %}
+                    {% crispy add_custom_food_to_party_form %}
+                {% endif %}
             </div>
         </div>
 

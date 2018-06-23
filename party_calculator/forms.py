@@ -10,6 +10,7 @@ from party_calculator.models import Party, Food, TemplateParty, OrderedFood
 from party_calculator.services.order import OrderService
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
+from party_calculator.services.template_order import TemplateOrderService
 from party_calculator.services.template_party import TemplatePartyService
 
 
@@ -166,8 +167,62 @@ class AddMemberToPartyForm(forms.Form):
         )
 
 
+class AddMemberToTemplateForm(AddMemberToPartyForm):
+    form_name = 'add_member_to_template_form'
+
+    def __init__(self, *args, **kwargs):
+        super(AddMemberToTemplateForm, self).__init__(*args, **kwargs)
+        self.helper.form_action = reverse_lazy('template-add-member',
+                                               kwargs={'template_id': self.party.id})
+
+
+class SetFrequencyForm(forms.Form):
+    form_name = 'set_frequency_form'
+
+    pattern = forms.CharField()
+
+    def __init__(self, *args, template=None, **kwargs):
+        super(SetFrequencyForm, self).__init__(*args, **kwargs)
+
+        self.template = template
+        self.crispy_helper()
+
+        self.fields['pattern'].widget = forms.TextInput(
+            attrs={'placeholder': 'Enter crontab pattern here...'}
+        )
+
+    def clean_pattern(self):
+        pattern = self.cleaned_data.get('pattern')
+        splitted = pattern.split(sep=' ')
+        if len(splitted) < 5:
+            raise ValidationError("Crontab pattern must be made of 5 statements (e.g. * * * * *)")
+
+        return pattern
+
+    def crispy_helper(self):
+        self.helper = FormHelper()
+        self.helper.form_method = 'GET'
+        self.helper.form_action = reverse_lazy('template-set-frequency',
+                                               kwargs={'template_id': self.template.id})
+        self.helper.form_class = 'form-inline'
+        self.helper.layout = Layout(
+            FieldWithButtons(
+                Field('pattern', css_class='form-control'),
+                Submit('set-frequency', 'Set frequency', css_class="btn-success"))
+        )
+
+
 class CreateTemplateForm(CreatePartyForm):
+    form_name = 'create_template_form'
+
     food = forms.ModelMultipleChoiceField(queryset=Food.objects.all())
+
+    def __init__(self, *args, user=None, **kwargs):
+        super(CreateTemplateForm, self).__init__(*args, user=user, **kwargs)
+
+        self.crispy_helper()
+        self.fields['food'].required = False
+        self.fields['members'].required = False
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -186,6 +241,31 @@ class CreateTemplateForm(CreatePartyForm):
                                              creator=creator,
                                              members=members,
                                              food=food)
+
+    def crispy_helper(self):
+        self.helper = FormHelper()
+        self.helper.form_action = reverse_lazy('create-template')
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = Layout(
+            Div(
+                Field('name', css_class='form-control'),
+                css_class='form-group'
+            ),
+            Div(
+                Field('members', css_class='form-control'),
+                css_class='form-group'
+            ),
+            Div(
+                Field('food', css_class='form-control'),
+                css_class='form-group'
+            ),
+            FormActions(
+                Div(
+                    Submit('create_template', 'Create template', css_class="btn-primary"),
+                    css_class='form-group'
+                )
+            )
+        )
 
 
 class SponsorPartyForm(forms.Form):
@@ -282,3 +362,23 @@ class AddCustomFoodToPartyForm(forms.ModelForm):
                 )
             )
         )
+
+
+class AddCustomFoodToTemplateForm(AddCustomFoodToPartyForm):
+    form_name = 'add_custom_food_to_template_form'
+
+    def __init__(self, *args, **kwargs):
+        super(AddCustomFoodToTemplateForm, self).__init__(*args, **kwargs)
+        self.helper.form_action = reverse_lazy('template-add-custom-food',
+                                               kwargs={'template_id': self.party.id})
+
+    def save(self, commit=True):
+        name = self.cleaned_data.get('name')
+        price = self.cleaned_data.get('price')
+        quantity = int(self.cleaned_data.get('quantity'))
+
+        if commit:
+            return TemplateOrderService().create_or_update_order_item(party=self.party,
+                                                                      name=name,
+                                                                      price=price,
+                                                                      quantity=quantity)

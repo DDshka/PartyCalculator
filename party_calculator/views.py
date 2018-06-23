@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views import View
@@ -7,7 +7,8 @@ from django.views.generic import TemplateView, ListView
 from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
 from party_calculator.exceptions import MemberAlreadyInPartyException
 from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
-    CreateTemplateForm, AddCustomFoodToPartyForm, SponsorPartyForm
+    CreateTemplateForm, AddCustomFoodToPartyForm, SponsorPartyForm, AddMemberToTemplateForm, SetFrequencyForm, \
+    AddCustomFoodToTemplateForm
 from party_calculator.models import Food, TemplateParty, Party
 from party_calculator.services.calculator import calculate
 from party_calculator.services.food import FoodService
@@ -119,6 +120,8 @@ class PartyDelete(View):
         party = PartyService().get(id=party_id)
         PartyService().delete(party)
 
+        return redirect(reverse('home'))
+
 
 class PartyAddFood(PartyAdminPermission, View):
     name = 'add-food-to-party'
@@ -141,7 +144,11 @@ class PartyAddCustomFood(PartyAdminPermission, View):
         party = PartyService().get(id=party_id)
         form = AddCustomFoodToPartyForm(request.GET, party=party)
         if not form.is_valid():
-            return PartyView.as_view()(self.request, party_id=party_id, add_custom_food_to_party_form=form)
+            kwargs = {
+                'party_id': party_id,
+                AddCustomFoodToPartyForm.form_name: form
+            }
+            return PartyView.as_view()(request, **kwargs)
 
         form.save()
         return redirect(reverse('party', kwargs={'party_id': party_id}))
@@ -196,9 +203,11 @@ class PartyInvite(PartyAdminPermission, View):
 
         form = AddMemberToPartyForm(request.GET, party=party)
         if not form.is_valid():
-            return PartyView.as_view()(request,
-                                       party_id=party_id,
-                                       kwargs={AddMemberToPartyForm.form_name: form})
+            kwargs = {
+                'party_id': party_id,
+                AddMemberToPartyForm.form_name: form
+            }
+            return PartyView.as_view()(request, **kwargs)
 
         info = form.cleaned_data.get('info')
         message = 'User successfully invited'
@@ -233,7 +242,11 @@ class PartySponsor(PartyMemberPermission, View):
 
         form = SponsorPartyForm(request.GET, member=member)
         if not form.is_valid():
-            return PartyView.as_view()(request, party_id=party_id, sponsor_party_form=form)
+            kwargs = {
+                'party_id': party_id,
+                SponsorPartyForm.form_name: form
+            }
+            return PartyView.as_view()(request, **kwargs)
 
         amount = form.cleaned_data.get('amount')
         PartyService().sponsor_party(member, amount)
@@ -251,6 +264,28 @@ class PartyMakeInactive(PartyAdminPermission, View):
         return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
+class PartyGrantOwnership(PartyAdminPermission, View):
+    name = 'party-grant-ownership'
+
+    def get(self, request, party_id: int, **kwargs):
+        member_id = request.GET.get('member')
+        member = MemberService().get(id=member_id)
+        MemberService().set_owner(member, True)
+
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
+
+
+class PartyRevokeOwnership(View):
+    name = 'party-revoke-ownership'
+
+    def get(self, request, party_id: int, **kwargs):
+        member_id = request.GET.get('member')
+        member = MemberService().get(id=member_id)
+        MemberService().set_owner(member, False)
+
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
+
+
 # ---------------------------------
 
 
@@ -264,7 +299,7 @@ class TemplatesListView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(TemplatesListView, self).get_context_data(object_list=object_list, **kwargs)
-        context['create_template_form'] = CreateTemplateForm(user=self.request.user)
+        context[CreateTemplateForm.form_name] = CreateTemplateForm(user=self.request.user)
 
         return context
 
@@ -298,12 +333,14 @@ class TemplateDelete(View):
         party = TemplatePartyService().get(id=template_id)
         TemplatePartyService().delete(party)
 
+        return redirect(reverse('templates'))
+
 
 class TemplatePartyView(TemplateView):
     name = 'template'
     template_name = 'party_template.html'
 
-    def get_context_data(self, template_id, **kwargs):
+    def get_context_data(self, template_id: int, **kwargs):
         context = {}
 
         template_party = TemplatePartyService().get(id=template_id)
@@ -316,7 +353,21 @@ class TemplatePartyView(TemplateView):
         context['ordered_food'] = template_ordered_food
 
         context['food'] = Food.objects.all()
-        context['add_to_party_form'] = AddMemberToPartyForm()
+
+        try:
+            context[AddMemberToTemplateForm.form_name] = kwargs[AddMemberToTemplateForm.form_name]
+        except KeyError:
+            context[AddMemberToTemplateForm.form_name] = AddMemberToTemplateForm(party=template_party)
+
+        try:
+            context[SetFrequencyForm.form_name] = kwargs[SetFrequencyForm.form_name]
+        except KeyError:
+            context[SetFrequencyForm.form_name] = SetFrequencyForm(template=template_party)
+
+        try:
+            context[AddCustomFoodToTemplateForm.form_name] = kwargs[AddCustomFoodToTemplateForm.form_name]
+        except KeyError:
+            context[AddCustomFoodToTemplateForm.form_name] = AddCustomFoodToTemplateForm(party=template_party)
 
         return context
 
@@ -325,13 +376,20 @@ class TemplateAddMemberView(View):
     name = 'template-add-member'
 
     def get(self, request, template_id, **kwargs):
-        info = request.GET.get('info')
-
         ps = TemplatePartyService()
-        party = ps.get(id=template_id)
+        template = ps.get(id=template_id)
 
+        form = AddMemberToTemplateForm(request.GET, party=template)
+        if not form.is_valid():
+            kwargs = {
+                'template_id': template_id,
+                AddMemberToTemplateForm.form_name: form
+            }
+            return TemplatePartyView.as_view()(request, **kwargs)
+
+        info = form.cleaned_data.get('info')
         try:
-            ps.add_member_to_template(party, info)
+            ps.add_member_to_template(template, info)
         except Profile.DoesNotExist:
             message = 'Such user does not found'
             return HttpResponse(message)
@@ -339,98 +397,123 @@ class TemplateAddMemberView(View):
             message = 'This member is already in template'
             return HttpResponse(message)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateKickMember(View):
     name = 'template-kick-member'
 
-    def get(self, request, **kwargs):
+    def get(self, request, template_id: int, **kwargs):
         member_id = request.GET.get('member')
         member = TemplateMemberService().get(id=member_id)
         TemplatePartyService().remove_member_from_template(member)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateAddFood(View):
     name = 'template-add-food'
 
-    def get(self, request, template_id: int):
+    def get(self, request, template_id: int, **kwargs):
         food_id = int(request.GET.get('food'))
         quantity = int(request.GET.get('quantity'))
 
-        party = TemplatePartyService().get(id=template_id)
+        template = TemplatePartyService().get(id=template_id)
         food = FoodService().get(id=food_id)
-        TemplatePartyService().order_food(party, food, quantity)
+        TemplatePartyService().order_food(template, food, quantity)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
+
+
+class TemplateAddCustomFood(View):
+    name = 'template-add-custom-food'
+
+    def get(self, request, template_id: int, **kwargs):
+        template = TemplatePartyService().get(id=template_id)
+        form = AddCustomFoodToTemplateForm(request.GET, party=template)
+        if not form.is_valid():
+            kwargs = {
+                'template_id': template_id,
+                AddCustomFoodToTemplateForm.form_name: form
+            }
+            return TemplatePartyView.as_view()(self.request, **kwargs)
+
+        form.save()
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateSetInactive(View):
     name = 'template-set-inactive'
 
-    def get(self, request, template_id: int):
-        party = TemplatePartyService().get(id=template_id)
-        TemplatePartyService().set_state(party, TemplateParty.INACTIVE)
+    def get(self, request, template_id: int, **kwargs):
+        template = TemplatePartyService().get(id=template_id)
+        TemplatePartyService().set_state(template, TemplateParty.INACTIVE)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateSetActive(View):
     name = 'template-set-active'
 
-    def get(self, request, template_id: int):
-        party = TemplatePartyService().get(id=template_id)
-        TemplatePartyService().set_state(party, TemplateParty.ACTIVE)
+    def get(self, request, template_id: int, **kwargs):
+        template = TemplatePartyService().get(id=template_id)
+        TemplatePartyService().set_state(template, TemplateParty.ACTIVE)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateGrantOwnership(View):
     name = 'template-grant-ownership'
 
-    def get(self, request, **kwargs):
+    def get(self, request, template_id: int, **kwargs):
         member_id = request.GET.get('member')
         member = TemplateMemberService().get(id=member_id)
-        TemplateMemberService().grant_ownership(member)
+        TemplateMemberService().set_owner(member, True)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateRevokeOwnership(View):
     name = 'template-revoke-ownership'
 
-    def get(self, request, **kwargs):
+    def get(self, request, template_id: int, **kwargs):
         member_id = request.GET.get('member')
         member = TemplateMemberService().get(id=member_id)
-        TemplateMemberService().revoke_ownership(member)
+        TemplateMemberService().set_owner(member, False)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateRemoveFood(View):
     name = 'template-remove-food'
 
-    def get(self, request, **kwargs):
+    def get(self, request, template_id: int, **kwargs):
         order_item_id = int(request.GET.get('order_item'))
 
         order_item = TemplateOrderService().get(id=order_item_id)
         TemplatePartyService().remove_from_order(order_item)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template_id}))
 
 
 class TemplateSetFrequency(View):
     name = 'template-set-frequency'
 
-    def get(self, request, template_id:int, **kwargs):
-        pattern: str = request.GET.get('pattern')
-
+    def get(self, request, template_id: int, **kwargs):
         template = TemplatePartyService().get(id=template_id)
+
+        form = SetFrequencyForm(request.GET, template=template)
+        if not form.is_valid():
+            kwargs = {
+                'template_id': template_id,
+                SetFrequencyForm.form_name: form
+            }
+            return TemplatePartyView.as_view()(request, **kwargs)
+
+        pattern = form.cleaned_data.get('pattern')
         TemplatePartyService().set_frequency(template, pattern)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('template', kwargs={'template_id': template.id}))
 
 
 class OmegaLul(View):
@@ -440,6 +523,6 @@ class OmegaLul(View):
         template_id = request.POST.get('template')
         template = TemplatePartyService().get(id=template_id)
 
-        PartyService().create_from_template(template)
+        party = PartyService().create_from_template(template)
 
-        return HttpResponse('ZDAROVA')
+        return redirect(reverse('party', kwargs={'party_id': party.id}))

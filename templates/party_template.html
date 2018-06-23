@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 
+{% block meta %}
+    {{ block.super }}
+    {% load crispy_forms_tags %}
+{% endblock meta %}
+
 {% block content %}
     <div class="container">
         <div class="row">
@@ -8,10 +13,7 @@
 
         <div class="row">
             <div class="col-lg-6">
-                <form action="{% url 'template-set-frequency' template.id %}">
-                    <input type="text" name="pattern">
-                    <button type="submit" class="btn">Set frequency</button>
-                </form>
+                {% crispy set_frequency_form %}
             </div>
 
             <div class="col-lg-6">
@@ -29,10 +31,6 @@
 
         <div class="row">
             <div class="col-lg-6">
-                <form action="{% url 'template-add-member' template.id %}">
-                    {{ add_to_party_form }}
-                    <button type="submit" class="btn btn-success">Add</button>
-                </form>
                 <table class="table">
                     <caption><h2>Members</h2></caption>
                     <thead>
@@ -69,6 +67,7 @@
                     </tr>
                     {% endfor %}
                 </table>
+                {% crispy add_member_to_template_form %}
             </div>
 
             <div class="col-lg-6">
@@ -110,9 +109,8 @@
                         </tr>
                         {% endfor %}
                     </table>
-                {% else %}
-                    <h1>YOU ARE IN THE SOVIET UNION</h1>
                 {% endif %}
+                {% crispy add_custom_food_to_template_form %}
             </div>
         </div>
     </div>
