@@ -7,7 +7,7 @@ from django.views.generic import TemplateView, ListView
 from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
 from party_calculator.exceptions import MemberAlreadyInPartyException
 from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
-    CreateTemplateForm
+    CreateTemplateForm, AddCustomFoodToPartyForm, SponsorPartyForm
 from party_calculator.models import Food, TemplateParty, Party
 from party_calculator.services.calculator import calculate
 from party_calculator.services.food import FoodService
@@ -34,8 +34,9 @@ class HomeView(TemplateView):
             profile = profile_service.get(id=self.request.user.id)
             context['parties'] = profile_service.get_profile_parties(profile)
             context['adm_parties'] = profile_service.get_profile_administrated_parties(profile)
-            context['create_party_form'] = CreatePartyForm(user=self.request.user)
-            context['create_party_from_existing_form'] = CreatePartyFromExistingForm(user=self.request.user)
+
+            context[CreatePartyForm.form_name] = CreatePartyForm(user=self.request.user)
+            context[CreatePartyFromExistingForm.form_name] = CreatePartyFromExistingForm(user=self.request.user)
 
         return context
 
@@ -46,12 +47,14 @@ class PartyView(PartyMemberPermission, TemplateView):
     template_name = 'party.html'
 
     def get_context_data(self, party_id: int, **kwargs):
-        context = {}
+        context = super().get_context_data(**kwargs)
         party_service = PartyService()
 
         user = self.request.user
         party = party_service.get(id=party_id)
         members = party_service.get_party_members(party)
+        current_member = MemberService().get(profile_id=user.id,
+                                             party_id=party_id)
         ordered_food = party_service.get_party_ordered_food(party)
 
         calculate(ordered_food, members)
@@ -60,12 +63,25 @@ class PartyView(PartyMemberPermission, TemplateView):
         context['is_active'] = party_service.is_active(party)
         context['has_template'] = party_service.has_template(party)
         context['members'] = members
-        context['current_member'] = MemberService().get(profile_id=user.id,
-                                                        party_id=party_id)
+        context['current_member'] = current_member
         context['ordered_food'] = ordered_food
 
         context['food'] = Food.objects.all()
-        context['add_to_party_form'] = AddMemberToPartyForm()
+
+        try:
+            context[AddMemberToPartyForm.form_name] = kwargs[AddMemberToPartyForm.form_name]
+        except KeyError:
+            context[AddMemberToPartyForm.form_name] = AddMemberToPartyForm(party=party)
+
+        try:
+            context[AddCustomFoodToPartyForm.form_name] = kwargs[AddCustomFoodToPartyForm.form_name]
+        except KeyError:
+            context[AddCustomFoodToPartyForm.form_name] = AddCustomFoodToPartyForm(party=party)
+
+        try:
+            context[SponsorPartyForm.form_name] = kwargs[SponsorPartyForm.form_name]
+        except KeyError:
+            context[SponsorPartyForm.form_name] = SponsorPartyForm(member=current_member)
 
         return context
 
@@ -76,8 +92,8 @@ class PartyCreateView(View):
     def post(self, request):
         form = CreatePartyForm(request.POST, user=request.user)
         if not form.is_valid():
-            # TODO: handle party creation form errors
-            return redirect(reverse('home'))
+            # TODO: handle form errors
+            pass
 
         party = form.save()
         return redirect(reverse('party', kwargs={'party_id': party.id}))
@@ -89,6 +105,7 @@ class PartyCreateFromExisting(View):
     def post(self, request):
         form = CreatePartyFromExistingForm(request.POST, user=request.user)
         if not form.is_valid():
+            # TODO: handle form errors
             return redirect(reverse('home'))
 
         party = form.save()
@@ -114,25 +131,38 @@ class PartyAddFood(PartyAdminPermission, View):
         food = FoodService().get(id=food_id)
         PartyService().order_food(party, food, quantity)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
+
+
+class PartyAddCustomFood(PartyAdminPermission, View):
+    name = 'add-custom-food-to-party'
+
+    def get(self, request, party_id: int, **kwargs):
+        party = PartyService().get(id=party_id)
+        form = AddCustomFoodToPartyForm(request.GET, party=party)
+        if not form.is_valid():
+            return PartyView.as_view()(self.request, party_id=party_id, add_custom_food_to_party_form=form)
+
+        form.save()
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 class PartyRemoveFood(PartyAdminPermission, View):
     name = 'remove-food-from-party'
 
-    def get(self, request, **kwargs):
+    def get(self, request, party_id: int, **kwargs):
         order_item_id = int(request.GET.get('order_item'))
 
         order_item = OrderService().get(id=order_item_id)
         PartyService().remove_from_order(order_item)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 class PartyExcludeFood(PartyMemberPermission, View):
     name = 'exclude-food'
 
-    def get(self, request, **kwargs):
+    def get(self, request, party_id: int, **kwargs):
         order_item_id = int(request.GET.get('order_item'))
         user_id = request.user.id
 
@@ -140,13 +170,13 @@ class PartyExcludeFood(PartyMemberPermission, View):
         order_item = OrderService().get(id=order_item_id)
         MemberService().member_exclude_food(profile, order_item)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 class PartyIncludeFood(PartyMemberPermission, View):
     name = 'include-food'
 
-    def get(self, request, **kwargs):
+    def get(self, request, party_id: int, **kwargs):
         order_item_id = int(request.GET.get('order_item'))
         user_id = request.user.id
 
@@ -154,18 +184,23 @@ class PartyIncludeFood(PartyMemberPermission, View):
         order_item = OrderService().get(id=order_item_id)
         MemberService().member_include_food(profile, order_item)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 class PartyInvite(PartyAdminPermission, View):
     name = 'invite-member'
 
     def get(self, request, party_id: int):
-        info = request.GET.get('info')
-
         ps = PartyService()
         party = ps.get(id=party_id)
 
+        form = AddMemberToPartyForm(request.GET, party=party)
+        if not form.is_valid():
+            return PartyView.as_view()(request,
+                                       party_id=party_id,
+                                       kwargs={AddMemberToPartyForm.form_name: form})
+
+        info = form.cleaned_data.get('info')
         message = 'User successfully invited'
         try:
             ps.invite_member(party, info)
@@ -180,35 +215,40 @@ class PartyInvite(PartyAdminPermission, View):
 class PartyKickMember(PartyAdminPermission, View):
     name = 'kick-member'
 
-    def get(self, request, **kwargs):
+    def get(self, request, party_id: int, **kwargs):
         member_id = request.GET.get('member')
         member = MemberService().get(id=member_id)
         PartyService().remove_member_from_party(member)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 class PartySponsor(PartyMemberPermission, View):
     name = 'sponsor-party'
 
-    def get(self, request, **kwargs):
-        amount = float(request.GET.get('amount'))
-        member_id = request.GET.get('member')
+    def get(self, request, party_id: int, **kwargs):
+        profile = ProfileService().get(id=request.user.id)
+        party = PartyService().get(id=party_id)
+        member = MemberService().get(party=party, profile=profile)
 
-        member = MemberService().get(id=member_id)
+        form = SponsorPartyForm(request.GET, member=member)
+        if not form.is_valid():
+            return PartyView.as_view()(request, party_id=party_id, sponsor_party_form=form)
+
+        amount = form.cleaned_data.get('amount')
         PartyService().sponsor_party(member, amount)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 class PartyMakeInactive(PartyAdminPermission, View):
     name = 'party-set-inactive'
 
-    def get(self, request, party_id: int):
+    def get(self, request, party_id: int, **kwargs):
         party = PartyService().get(id=party_id)
         PartyService().set_state(party, Party.INACTIVE)
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return redirect(reverse('party', kwargs={'party_id': party_id}))
 
 
 # ---------------------------------

@@ -209,7 +209,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 # Google reCAPTCHA
-CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", 0) == 1
+CAPTCHA_ENABLED = bool(os.environ.get("CAPTCHA_ENABLED", 0))
 GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY',
                                            '6LdCel8UAAAAAHUTjJsHpG2NQCeVMXJQEHeFPg_2')
 GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY',

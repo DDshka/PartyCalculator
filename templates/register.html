@@ -1,15 +1,18 @@
 {% extends 'base.html' %}
 
+{% block meta %}
+    {{ block.super }}
+    {% load crispy_forms_tags %}
+{% endblock meta %}
+
 {% block content %}
-    <form action="{% url 'sign-in' %}" method="post">
-        {% csrf_token %}
-        {{ form }}
-
-        {% if captcha_enabled %}
-        <script src='https://www.google.com/recaptcha/api.js'></script>
-        <div class="g-recaptcha" data-sitekey="{{ google_recaptcha_site_key }}"></div>
-        {% endif %}
-
-        <button type="submit">Sign in</button>
-    </form>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4"></div>
+            <div class="col-lg-4">
+                {% crispy form %}
+            </div>
+            <div class="col-lg-4"></div>
+        </div>
+    </div>
 {% endblock content %}

@@ -3,6 +3,7 @@
 {% block meta %}
     {{ block.super }}
     {% load static %}
+    {% load crispy_forms_tags %}
 {% endblock meta %}
 {% block title %} Home {% endblock title %}
 
@@ -10,7 +11,7 @@
     <div class="container">
         {% if request.user.is_authenticated %}
         <div>
-            <h1>WELCOME TO THE RICE FIELD, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></h1>
+            <h1>Welcome, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></h1>
         </div>
 
         <div class="row">
@@ -23,7 +24,7 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <h3>May you should find someone to speak?</h3>
+                    <h3>May be you should find someone to speak?</h3>
                 {% endif %}
             </div>
             <div class="col-lg-6">
@@ -41,19 +42,15 @@
         </div>
 
         <div class="row">
-            <form action="{% url 'create-party' %}" method="post" id="create-party-form">
-                {% csrf_token %}
-                {{ create_party_form.as_p }}
-                <button type="submit">Create new party</button>
-            </form>
+            <div class="col-lg-4">
+                {% crispy create_party_form %}
+            </div>
         </div>
 
         <div class="row">
-            <form action="{% url 'create-party-from-existing' %}" method="post">
-                {% csrf_token %}
-                {{ create_party_from_existing_form }}
-                <button type="submit">Create new party</button>
-            </form>
+           <div class="col-lg-4">
+                {% crispy create_party_from_existing_form %}
+            </div>
         </div>
 
         <div class="row">

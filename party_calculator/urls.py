@@ -6,7 +6,7 @@ from party_calculator.views import HomeView, PartyView, PartyCreateView, \
     PartyIncludeFood, PartySponsor, PartyMakeInactive, TemplatesListView, TemplatePartyView, TemplateCreate, \
     TemplateAddMemberView, TemplateKickMember, TemplateAddFood, TemplateSetInactive, TemplateSetActive, \
     TemplateGrantOwnership, TemplateRevokeOwnership, TemplateRemoveFood, TemplateSetFrequency, OmegaLul, \
-    TemplateCreateFromParty, PartyDelete, TemplateDelete
+    TemplateCreateFromParty, PartyDelete, TemplateDelete, PartyAddCustomFood
 
 urlpatterns = [
     url(r'^$', HomeView.as_view(),
@@ -23,6 +23,9 @@ urlpatterns = [
 
     url(r'^party/(?P<party_id>\d+)/add/food', PartyAddFood.as_view(),
         name=PartyAddFood.name),
+
+    url(r'^party/(?P<party_id>\d+)/add/custom-food', PartyAddCustomFood.as_view(),
+        name=PartyAddCustomFood.name),
 
     url(r'^party/(?P<party_id>\d+)/add/member', PartyInvite.as_view(),
         name=PartyInvite.name),

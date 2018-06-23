@@ -1,11 +1,14 @@
 import json
 import urllib
 
+from crispy_forms.bootstrap import FormActions
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Field, Submit, HTML
 from django import forms
 from django.core.exceptions import ValidationError
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
-from PartyCalculator.settings import CAPTCHA_ENABLED
+from PartyCalculator.settings import CAPTCHA_ENABLED, GOOGLE_RECAPTCHA_SITE_KEY
 from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile, Code
 
@@ -15,14 +18,17 @@ class LoginForm(forms.ModelForm):
         model = Profile
         fields = ('username', 'password',)
 
-    request = None
-
     def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        self.crispy_helper()
+
         if request:
-            self.request = request
             super(LoginForm, self).__init__(data=request.POST, *args, **kwargs)
         else:
             super(LoginForm, self).__init__(*args, **kwargs)
+
+        self.fields['username'].help_text = None
+        self.fields['password'].widget = forms.PasswordInput()
 
     def clean(self):
         super(LoginForm, self)
@@ -37,7 +43,42 @@ class LoginForm(forms.ModelForm):
 
         if not logged:
             raise ValidationError('Wrong authentication. '
-                                  'Provided data may be wrong or such user simply does not exist')
+                                  'Provided data may be wrong or such user simply does not exist,'
+                                  'or this profile has not been activated')
+
+    def crispy_helper(self):
+        self.helper = FormHelper()
+        self.helper.form_action = reverse_lazy('login')
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = Layout(
+            Div(
+                Field('username', css_class='form-control'),
+                css_class='form-group'
+            ),
+            Div(
+                Field('password', css_class='form-control'),
+                css_class='form-group'
+            ),
+        )
+
+        if CAPTCHA_ENABLED:
+            self.helper.layout.append(
+                Div(
+                    HTML("<script src='https://www.google.com/recaptcha/api.js'></script>"
+                         "<div class='g-recaptcha' data-sitekey='{0}'></div>"
+                         .format(GOOGLE_RECAPTCHA_SITE_KEY)),
+                    css_class='form-group'
+                )
+            )
+
+        self.helper.layout.append(
+            FormActions(
+                Div(
+                    Submit('login', 'Login', css_class='btn-block'),
+                    css_class='form-group'
+                )
+            )
+        )
 
 
 class SignInForm(forms.ModelForm):
@@ -45,14 +86,17 @@ class SignInForm(forms.ModelForm):
         model = Profile
         fields = ('username', 'password', 'email',)
 
-    request = None
-
     def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        self.crispy_helper()
+
         if request:
-            self.request = request
             super(SignInForm, self).__init__(data=request.POST, *args, **kwargs)
         else:
             super(SignInForm, self).__init__(*args, **kwargs)
+
+        self.fields['username'].help_text = None
+        self.fields['password'].widget = forms.PasswordInput()
 
     def clean(self):
         super(SignInForm, self)
@@ -90,6 +134,44 @@ class SignInForm(forms.ModelForm):
         user.save()
 
         return user
+
+    def crispy_helper(self):
+        self.helper = FormHelper()
+        self.helper.form_action = reverse_lazy('sign-in')
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = Layout(
+            Div(
+                Field('username', css_class='form-control'),
+                css_class='form-group'
+            ),
+            Div(
+                Field('password', css_class='form-control'),
+                css_class='form-group'
+            ),
+            Div(
+                Field('email', css_class='form-control'),
+                css_class='form-group'
+            )
+        )
+
+        if CAPTCHA_ENABLED:
+            self.helper.layout.append(
+                Div(
+                    HTML("<script src='https://www.google.com/recaptcha/api.js'></script>"
+                         "<div class='g-recaptcha' data-sitekey='{0}'></div>"
+                         .format(GOOGLE_RECAPTCHA_SITE_KEY)),
+                    css_class='form-group'
+                )
+            )
+
+        self.helper.layout.append(
+            FormActions(
+                Div(
+                    Submit('sign-in', 'Sign In', css_class='btn-block'),
+                    css_class='form-group'
+                )
+            )
+        )
 
 
 def check_captcha(request):

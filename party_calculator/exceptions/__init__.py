@@ -23,5 +23,9 @@ class TemplatePartyHasActiveRelatedPartyException(PartyCalculatorException):
     pass
 
 
+class NegativeValueException(PartyCalculatorException):
+    pass
+
+
 class OAuthException(PartyCalculatorException):
     pass

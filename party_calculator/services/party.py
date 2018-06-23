@@ -108,7 +108,10 @@ class PartyService(Service):
     def order_food(self, party: model, food: Food, quantity: int):
         self.check_is_party_active(party)
 
-        self.order_service.create_or_update_order_item(party, food, quantity)
+        self.order_service.create_or_update_order_item(party,
+                                                       food.name,
+                                                       food.price,
+                                                       quantity)
 
     def remove_from_order(self, order_item: OrderedFood):
         self.check_is_party_active(order_item.party)
