@@ -9,7 +9,7 @@
         <div class="row">
             <div class="col-lg-4"></div>
             <div class="col-lg-4">
-                <form class="form-horizontal" action="{% url 'sign-in' %}" method="post">
+                <form class="form-horizontal" action="{% url 'sign-up' %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=signin_form %}

@@ -55,8 +55,8 @@ class LoginView(View):
         return context
 
 
-class SignInView(CreateView):
-    name = 'sign-in'
+class SignUpView(CreateView):
+    name = 'sign-up'
     template_name = 'register.html'
     model = Profile
     form_class = SignInForm
@@ -66,7 +66,7 @@ class SignInView(CreateView):
         if request.user.is_authenticated:
             return redirect(reverse_lazy('home'))
 
-        return super(SignInView, self).get(request, *args, **kwargs)
+        return super(SignUpView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
