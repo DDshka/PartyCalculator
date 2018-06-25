@@ -2,17 +2,24 @@
 
 {% block meta %}
     {{ block.super }}
-    {% load crispy_forms_tags %}
 {% endblock meta %}
 
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                {% crispy create_template_form %}
+                <form class="form-horizontal" action="{% url 'create-template' %}" method="post">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=create_template_form %}
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Create template</button>
+                    </div>
+                </form>
                 {% if templates %}
                     <table class="table">
-                        <caption><h1>Your templated</h1></caption>
+                        <caption><h1>Your templates</h1></caption>
                         {% for template in templates %}
                             <tr>
                                 <td><a href="{% url 'template' template.id %}">{{ template.name }}</a></td>

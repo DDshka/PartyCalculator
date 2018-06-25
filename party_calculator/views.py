@@ -128,7 +128,7 @@ class PartyAddFood(PartyAdminPermission, View):
 
     def get(self, request, party_id: int):
         food_id = int(request.GET.get('food'))
-        quantity = int(request.GET.get('quantity'))
+        quantity = abs(int(request.GET.get('quantity')))
 
         party = PartyService().get(id=party_id)
         food = FoodService().get(id=food_id)
@@ -416,7 +416,7 @@ class TemplateAddFood(View):
 
     def get(self, request, template_id: int, **kwargs):
         food_id = int(request.GET.get('food'))
-        quantity = int(request.GET.get('quantity'))
+        quantity = abs(int(request.GET.get('quantity')))
 
         template = TemplatePartyService().get(id=template_id)
         food = FoodService().get(id=food_id)

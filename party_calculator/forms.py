@@ -1,10 +1,6 @@
-from crispy_forms.bootstrap import FormActions, FieldWithButtons
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Field, Submit, HTML
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import widgets
-from django.urls import reverse_lazy
 
 from party_calculator.models import Party, Food, TemplateParty, OrderedFood
 from party_calculator.services.order import OrderService
@@ -23,7 +19,6 @@ class CreatePartyForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
-        self.crispy_helper()
 
         super(CreatePartyForm, self).__init__(*args, **kwargs)
 
@@ -51,28 +46,6 @@ class CreatePartyForm(forms.ModelForm):
 
         return party
 
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_action = reverse_lazy('create-party')
-        self.helper.form_class = 'form-horizontal'
-        self.helper.layout = Layout(
-            Div(
-                Field('name', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                HTML('<strong>Select users below to invite them</strong>'),
-                Field('members', css_class='form-control'),
-                css_class='form-group',
-            ),
-            FormActions(
-                Div(
-                    Submit('create_party', 'Create party', css_class="btn-primary"),
-                    css_class='form-group'
-                )
-            )
-        )
-
 
 class CreatePartyFromExistingForm(forms.ModelForm):
     class Meta:
@@ -90,7 +63,6 @@ class CreatePartyFromExistingForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
-        self.crispy_helper()
         super(CreatePartyFromExistingForm, self).__init__(*args, **kwargs)
 
     def clean_name(self):
@@ -118,29 +90,6 @@ class CreatePartyFromExistingForm(forms.ModelForm):
 
         return ps.create(name=name, creator=creator, members=members)
 
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_action = reverse_lazy('create-party-from-existing')
-        self.helper.form_class = 'form-horizontal'
-        self.helper.layout = Layout(
-            Div(
-                Field('name', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('existing_party_name', css_class='form-control'),
-                css_class='form-group'
-            ),
-            FormActions(
-                Div(
-                    Submit('create_party_from_existing',
-                           'Create party from existing one',
-                           css_class="btn-primary"),
-                    css_class='form-group'
-                )
-            )
-        )
-
 
 class AddMemberToPartyForm(forms.Form):
     form_name = 'add_member_to_party_form'
@@ -150,30 +99,12 @@ class AddMemberToPartyForm(forms.Form):
 
     def __init__(self, *args, party=None, **kwags):
         self.party = party
-        self.crispy_helper()
 
         super(AddMemberToPartyForm, self).__init__(*args, **kwags)
-
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_method = 'GET'
-        self.helper.form_action = reverse_lazy('invite-member',
-                                               kwargs={'party_id': self.party.id})
-        self.helper.form_class = 'form-inline'
-        self.helper.layout = Layout(
-            FieldWithButtons(
-                Field('info', css_class='form-control'),
-                Submit('invite-member', 'Invite', css_class="btn-success"))
-        )
 
 
 class AddMemberToTemplateForm(AddMemberToPartyForm):
     form_name = 'add_member_to_template_form'
-
-    def __init__(self, *args, **kwargs):
-        super(AddMemberToTemplateForm, self).__init__(*args, **kwargs)
-        self.helper.form_action = reverse_lazy('template-add-member',
-                                               kwargs={'template_id': self.party.id})
 
 
 class SetFrequencyForm(forms.Form):
@@ -185,7 +116,6 @@ class SetFrequencyForm(forms.Form):
         super(SetFrequencyForm, self).__init__(*args, **kwargs)
 
         self.template = template
-        self.crispy_helper()
 
         self.fields['pattern'].widget = forms.TextInput(
             attrs={'placeholder': 'Enter crontab pattern here...'}
@@ -194,22 +124,11 @@ class SetFrequencyForm(forms.Form):
     def clean_pattern(self):
         pattern = self.cleaned_data.get('pattern')
         splitted = pattern.split(sep=' ')
+        # TODO: secure crontab
         if len(splitted) < 5:
             raise ValidationError("Crontab pattern must be made of 5 statements (e.g. * * * * *)")
 
         return pattern
-
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_method = 'GET'
-        self.helper.form_action = reverse_lazy('template-set-frequency',
-                                               kwargs={'template_id': self.template.id})
-        self.helper.form_class = 'form-inline'
-        self.helper.layout = Layout(
-            FieldWithButtons(
-                Field('pattern', css_class='form-control'),
-                Submit('set-frequency', 'Set frequency', css_class="btn-success"))
-        )
 
 
 class CreateTemplateForm(CreatePartyForm):
@@ -220,7 +139,6 @@ class CreateTemplateForm(CreatePartyForm):
     def __init__(self, *args, user=None, **kwargs):
         super(CreateTemplateForm, self).__init__(*args, user=user, **kwargs)
 
-        self.crispy_helper()
         self.fields['food'].required = False
         self.fields['members'].required = False
 
@@ -242,31 +160,6 @@ class CreateTemplateForm(CreatePartyForm):
                                              members=members,
                                              food=food)
 
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_action = reverse_lazy('create-template')
-        self.helper.form_class = 'form-horizontal'
-        self.helper.layout = Layout(
-            Div(
-                Field('name', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('members', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('food', css_class='form-control'),
-                css_class='form-group'
-            ),
-            FormActions(
-                Div(
-                    Submit('create_template', 'Create template', css_class="btn-primary"),
-                    css_class='form-group'
-                )
-            )
-        )
-
 
 class SponsorPartyForm(forms.Form):
     form_name = 'sponsor_party_form'
@@ -275,7 +168,6 @@ class SponsorPartyForm(forms.Form):
 
     def __init__(self, *args, member=None, **kwargs):
         self.member = member
-        self.crispy_helper()
         super(SponsorPartyForm, self).__init__(*args, **kwargs)
 
     def clean_amount(self):
@@ -284,18 +176,6 @@ class SponsorPartyForm(forms.Form):
             raise ValidationError('Sponsor amount can`t be less than 1')
 
         return amount
-
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_method = 'GET'
-        self.helper.form_action = reverse_lazy('sponsor-party',
-                                               kwargs={'party_id': self.member.party.id})
-        self.helper.form_class = 'form-inline'
-        self.helper.layout = Layout(
-            FieldWithButtons(
-                Field('amount', css_class='form-control'),
-                Submit('sponsor-party', 'Sponsor', css_class="btn-success"))
-        )
 
 
 class AddCustomFoodToPartyForm(forms.ModelForm):
@@ -307,7 +187,6 @@ class AddCustomFoodToPartyForm(forms.ModelForm):
 
     def __init__(self, *args, party=None, **kwargs):
         self.party = party
-        self.crispy_helper()
         super(AddCustomFoodToPartyForm, self).__init__(*args, **kwargs)
 
     def clean_price(self):
@@ -335,42 +214,9 @@ class AddCustomFoodToPartyForm(forms.ModelForm):
                                                               price=price,
                                                               quantity=quantity)
 
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_method = 'GET'
-        self.helper.form_action = reverse_lazy('add-custom-food-to-party',
-                                               kwargs={'party_id': self.party.id})
-        self.helper.form_class = 'form-horizontal'
-        self.helper.layout = Layout(
-            Div(
-                Field('name', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('price', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('quantity', css_class='form-control'),
-                css_class='form-group'
-            ),
-            FormActions(
-                Div(
-                    Submit('add_custom_food',
-                           'Add custom food'),
-                    css_class='form-group'
-                )
-            )
-        )
-
 
 class AddCustomFoodToTemplateForm(AddCustomFoodToPartyForm):
     form_name = 'add_custom_food_to_template_form'
-
-    def __init__(self, *args, **kwargs):
-        super(AddCustomFoodToTemplateForm, self).__init__(*args, **kwargs)
-        self.helper.form_action = reverse_lazy('template-add-custom-food',
-                                               kwargs={'template_id': self.party.id})
 
     def save(self, commit=True):
         name = self.cleaned_data.get('name')

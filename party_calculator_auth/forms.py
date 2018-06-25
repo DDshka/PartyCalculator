@@ -1,14 +1,11 @@
 import json
 import urllib
 
-from crispy_forms.bootstrap import FormActions
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Field, Submit, HTML
 from django import forms
 from django.core.exceptions import ValidationError
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 
-from PartyCalculator.settings import CAPTCHA_ENABLED, GOOGLE_RECAPTCHA_SITE_KEY
+from PartyCalculator.settings import reverse
 from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile, Code
 
@@ -18,9 +15,10 @@ class LoginForm(forms.ModelForm):
         model = Profile
         fields = ('username', 'password',)
 
+    form_name = 'login_form'
+
     def __init__(self, request=None, *args, **kwargs):
         self.request = request
-        self.crispy_helper()
 
         if request:
             super(LoginForm, self).__init__(data=request.POST, *args, **kwargs)
@@ -46,49 +44,16 @@ class LoginForm(forms.ModelForm):
                                   'Provided data may be wrong or such user simply does not exist,'
                                   'or this profile has not been activated')
 
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_action = reverse_lazy('login')
-        self.helper.form_class = 'form-horizontal'
-        self.helper.layout = Layout(
-            Div(
-                Field('username', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('password', css_class='form-control'),
-                css_class='form-group'
-            ),
-        )
-
-        if CAPTCHA_ENABLED:
-            self.helper.layout.append(
-                Div(
-                    HTML("<script src='https://www.google.com/recaptcha/api.js'></script>"
-                         "<div class='g-recaptcha' data-sitekey='{0}'></div>"
-                         .format(GOOGLE_RECAPTCHA_SITE_KEY)),
-                    css_class='form-group'
-                )
-            )
-
-        self.helper.layout.append(
-            FormActions(
-                Div(
-                    Submit('login', 'Login', css_class='btn-block'),
-                    css_class='form-group'
-                )
-            )
-        )
-
 
 class SignInForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ('username', 'password', 'email',)
 
+    form_name = 'signin_form'
+
     def __init__(self, request=None, *args, **kwargs):
         self.request = request
-        self.crispy_helper()
 
         if request:
             super(SignInForm, self).__init__(data=request.POST, *args, **kwargs)
@@ -135,47 +100,9 @@ class SignInForm(forms.ModelForm):
 
         return user
 
-    def crispy_helper(self):
-        self.helper = FormHelper()
-        self.helper.form_action = reverse_lazy('sign-in')
-        self.helper.form_class = 'form-horizontal'
-        self.helper.layout = Layout(
-            Div(
-                Field('username', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('password', css_class='form-control'),
-                css_class='form-group'
-            ),
-            Div(
-                Field('email', css_class='form-control'),
-                css_class='form-group'
-            )
-        )
-
-        if CAPTCHA_ENABLED:
-            self.helper.layout.append(
-                Div(
-                    HTML("<script src='https://www.google.com/recaptcha/api.js'></script>"
-                         "<div class='g-recaptcha' data-sitekey='{0}'></div>"
-                         .format(GOOGLE_RECAPTCHA_SITE_KEY)),
-                    css_class='form-group'
-                )
-            )
-
-        self.helper.layout.append(
-            FormActions(
-                Div(
-                    Submit('sign-in', 'Sign In', css_class='btn-block'),
-                    css_class='form-group'
-                )
-            )
-        )
-
 
 def check_captcha(request):
-    if CAPTCHA_ENABLED:
+    if reverse:
         ''' Begin reCAPTCHA validation '''
         recaptcha_response = request.POST.get('g-recaptcha-response')
         url = 'https://www.google.com/recaptcha/api/siteverify'

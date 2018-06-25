@@ -107,7 +107,7 @@ class TemplatePartyService(Service):
         self.template_member_service.revoke_membership(member)
 
     def order_food(self, template: model, food: Food, quantity: int):
-        self.template_order_service.create_or_update_order_item(template, food, quantity)
+        self.template_order_service.create_or_update_order_item(template, food.name, food.price, quantity)
 
     def remove_from_order(self, order_item: OrderedFood):
         self.template_order_service.delete(order_item)

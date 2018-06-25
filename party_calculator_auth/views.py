@@ -9,7 +9,7 @@ from django.views import View
 from django.views.generic import CreateView
 from social_django.models import UserSocialAuth
 
-from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY, CAPTCHA_ENABLED
+from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY, reverse
 from party_calculator.services.profile import ProfileService
 from party_calculator_auth.forms import LoginForm, SignInForm
 from party_calculator_auth.models import Profile
@@ -31,7 +31,10 @@ class LoginView(View):
 
         form = LoginForm(request)
         if not form.is_valid():
-            return render_to_response(self.template_name, self.get_context_data(form=form))
+            kwargs = {
+                LoginForm.form_name: form
+            }
+            return render(request, self.template_name, self.get_context_data(**kwargs))
 
         if request.GET.get('next'):
             return HttpResponseRedirect(request.GET.get('next'))
@@ -40,12 +43,15 @@ class LoginView(View):
 
     def get_context_data(self, **kwargs):
         context = {}
+
         try:
-            context['form'] = kwargs['form']
+            context[LoginForm.form_name] = kwargs[LoginForm.form_name]
         except KeyError:
-            context['form'] = LoginForm()
-        context['captcha_enabled'] = CAPTCHA_ENABLED
+            context[LoginForm.form_name] = LoginForm()
+
+        context['captcha_enabled'] = reverse
         context['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
+
         return context
 
 
@@ -68,20 +74,25 @@ class SignInView(CreateView):
 
         form = SignInForm(request)
         if not form.is_valid():
-            return render_to_response(self.template_name, self.get_context_data(form=form))
+            kwargs = {
+                SignInForm.form_name: form
+            }
+            return render_to_response(self.template_name, self.get_context_data(**kwargs))
 
         form.save()
         return redirect(reverse_lazy('home'))
 
     def get_context_data(self, **kwargs):
         context = {}
-        # context = super(SignInView, self).get_context_data(**kwargs)
+
         try:
-            context['form'] = kwargs['form']
+            context[SignInForm.form_name] = kwargs[SignInForm.form_name]
         except KeyError:
-            context['form'] = SignInForm()
-        context['captcha_enabled'] = CAPTCHA_ENABLED
+            context[SignInForm.form_name] = SignInForm()
+
+        context['captcha_enabled'] = reverse
         context['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
+
         return context
 
 

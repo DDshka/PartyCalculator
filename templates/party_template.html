@@ -2,7 +2,6 @@
 
 {% block meta %}
     {{ block.super }}
-    {% load crispy_forms_tags %}
 {% endblock meta %}
 
 {% block content %}
@@ -13,7 +12,13 @@
 
         <div class="row">
             <div class="col-lg-6">
-                {% crispy set_frequency_form %}
+                <form class="form-inline" action="{% url 'template-set-frequency' template.id %}">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=set_frequency_form %}
+
+                    <button type="submit" class="btn btn-success">Set frequency</button>
+                </form>
             </div>
 
             <div class="col-lg-6">
@@ -67,7 +72,13 @@
                     </tr>
                     {% endfor %}
                 </table>
-                {% crispy add_member_to_template_form %}
+                <form class="form-inline" action="{% url 'template-add-member' template.id %}">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=add_member_to_template_form %}
+
+                    <button type="submit" class="btn btn-success">Add member</button>
+                </form>
             </div>
 
             <div class="col-lg-6">
@@ -94,6 +105,13 @@
                     </tr>
                     {% endfor %}
                 </table>
+                <form class="form-horizontal" action="{% url 'template-set-frequency' template.id %}">
+                        {% csrf_token %}
+
+                        {% include 'snippets/bs_form.html' with form=add_custom_food_to_template_form %}
+
+                        <button type="submit" class="btn btn-primary">Add custom food</button>
+                </form>
                 {% if food %}
                     <table class="table">
                         <caption><h2>Available food</h2></caption>
@@ -110,7 +128,6 @@
                         {% endfor %}
                     </table>
                 {% endif %}
-                {% crispy add_custom_food_to_template_form %}
             </div>
         </div>
     </div>

@@ -50,11 +50,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'crispy_forms',
     'django_celery_beat',
     'rest_framework',
     'social_django',
-
+    'widget_tweaks',
+    
     'party_calculator',
     'party_calculator_auth',
 ]
@@ -209,7 +209,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 # Google reCAPTCHA
-CAPTCHA_ENABLED = bool(os.environ.get("CAPTCHA_ENABLED", 0))
+reverse = os.environ.get("CAPTCHA_ENABLED", "0") == "1"
 GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY',
                                            '6LdCel8UAAAAAHUTjJsHpG2NQCeVMXJQEHeFPg_2')
 GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY',
