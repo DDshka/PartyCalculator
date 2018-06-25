@@ -14,7 +14,7 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-6">
+            <div class="col-lg-4">
                 <h2>Parties you participate: </h2>
                 {% if parties %}
                     <ul>
@@ -26,7 +26,7 @@
                     <h3>May be you should find someone to speak?</h3>
                 {% endif %}
             </div>
-            <div class="col-lg-6">
+            <div class="col-lg-4">
                 <h2>Parties you administrate: </h2>
                 {% if adm_parties %}
                     <ul>
@@ -37,6 +37,9 @@
                 {% else %}
                     <h3>You administrate no parties</h3>
                 {% endif %}
+            </div>
+            <div class="col-lg-4">
+                <h2><a href="{% url 'templates' %}">Your templates</a></h2>
             </div>
         </div>
 
@@ -66,18 +69,6 @@
                     </div>
                 </form>
             </div>
-        </div>
-
-        <div class="row">
-            <h1><a href="{% url 'templates' %}">Templates</a></h1>
-        </div>
-
-        <div class="row">
-            <form action="{% url 'create-party-from-template' %}" method="post">
-                {% csrf_token %}
-                <input type="text" name="template">
-                <button type="submit" class="btn">Create from template</button>
-            </form>
         </div>
 
         {% else %}

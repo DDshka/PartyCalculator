@@ -5,7 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
-from PartyCalculator.settings import reverse
+from PartyCalculator.settings import CAPTCHA_ENABLED
 from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile, Code
 
@@ -102,7 +102,7 @@ class SignInForm(forms.ModelForm):
 
 
 def check_captcha(request):
-    if reverse:
+    if CAPTCHA_ENABLED:
         ''' Begin reCAPTCHA validation '''
         recaptcha_response = request.POST.get('g-recaptcha-response')
         url = 'https://www.google.com/recaptcha/api/siteverify'

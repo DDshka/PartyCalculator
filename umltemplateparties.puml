@@ -24,7 +24,7 @@ class TemplateOrderedFood {
   Integer quantity
 }
 
-class Frequency {
+class CrontabSchedule {
   String name
   String hour
   String minute
@@ -37,5 +37,5 @@ TemplateParty "1" --* "many" TemplateMembers
 TemplateMembers "1" --* "many" TemplateMemberFoodExclude
 TemplateParty "1" --* "many" TemplateOrderedFood
 TemplateOrderedFood "1" --* "many" TemplateMemberFoodExclude
-TemplateParty "1" --* "many" Frequency
+TemplateParty "1" --* "many" CrontabSchedule
 @enduml

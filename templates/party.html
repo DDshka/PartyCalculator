@@ -138,12 +138,14 @@
                             </form>
                             {% endif %}
                         </td>
+                        {% if current_member.is_owner %}
                         <td>
                             <form action="{% url 'remove-food-from-party' party.id %}">
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>
                         </td>
+                        {% endif %}
                         {% endif %}
                     </tr>
                     {% endfor %}
@@ -161,6 +163,26 @@
                         <button type="submit" class="btn btn-primary">Add custom food</button>
                     </div>
                 </form>
+                <div class="row">
+                    <div class="col-lg-12">
+                        {% if food %}
+                            <table class="table">
+                                <caption><h1>Available food</h1></caption>
+                                {% for product in food %}
+                                <tr>
+                                    <td>{{ product }}</td>
+                                    <td>{{ product.price }}</td>
+                                    <form action="{% url 'add-food-to-party' party.id %}">
+                                        <input type="hidden" name="food" value="{{ product.id }}">
+                                        <td><input type="number" min="1" value="1" name="quantity"></td>
+                                        <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
+                                    </form>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        {% endif %}
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -201,28 +223,5 @@
                 {% endif %}
             </div>
         </div>
-
-        {% if is_active %}
-        <div class="row">
-            <div class="col-lg-12">
-                {% if food %}
-                    <table class="table">
-                        <caption><h1>Available food</h1></caption>
-                        {% for product in food %}
-                        <tr>
-                            <td>{{ product }}</td>
-                            <td>{{ product.price }}</td>
-                            <form action="{% url 'add-food-to-party' party.id %}">
-                                <input type="hidden" name="food" value="{{ product.id }}">
-                                <td><input type="number" min="1" value="1" name="quantity"></td>
-                                <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
-                            </form>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
     </div>
 {% endblock content %}

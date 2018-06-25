@@ -28,6 +28,7 @@ class AbstractParty(models.Model):
 class AbstractMembership(models.Model):
     class Meta:
         abstract = True
+        ordering = ['-is_owner']
 
     profile = models.ForeignKey(Profile, on_delete=models.DO_NOTHING)
     is_owner = models.BooleanField(null=False, default=False)

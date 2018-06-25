@@ -43,7 +43,7 @@ class TemplatePartyService(Service):
 
         for item in food:
             self.template_order_service.create(party=template_party,
-                                               food=item.name,
+                                               name=item.name,
                                                price=item.price,
                                                quantity=1)
 
