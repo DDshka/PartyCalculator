@@ -124,7 +124,7 @@
                         <td>{{ order_item.total }}</td>
                         {% if is_active %}
                         <td>
-                            {% if order_item|is_excluded:request %}
+                            {% if order_item|is_excluded:current_member %}
                             <form action="{% url 'include-food' party.id %}" class="form-inline" style="display: inline">
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-success">Include</button>
@@ -193,13 +193,32 @@
                     <table class="table">
                         <caption><h1>Details</h1></caption>
                         <thead>
+                            <th>Member</th>
+                            <th>Product</th>
+                            <th>To pay</th>
+                        </thead>
+                        {% for member in members %}
+                            {% for order_item in ordered_food %}
+                            <tr {% if member == current_member %} style="background-color:aliceblue" {% endif %}>
+                                <td>{{ member.profile.username }}</td>
+                                <td>{{ order_item.name }}</td>
+                                {% if order_item|is_excluded:member %}
+                                <td>0</td>
+                                {% else %}
+                                <td>{{ order_item.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </table>
+                    <table class="table">
+                        <caption><h1>Price for each product</h1></caption>
+                        <thead>
                             <th>Product</th>
                             <th>Price</th>
                             <th>Quantity</th>
                             <th>People</th>
-                            {% for member in members %}
-                            <th>{{ member.profile }}</th>
-                            {% endfor %}
+                            <th>To pay</th>
                         </thead>
                         {% for order_item in ordered_food %}
                             <tr>
@@ -207,13 +226,7 @@
                                 <td>{{ order_item.price }}</td>
                                 <td>{{ order_item.quantity }}</td>
                                 <td>{{ order_item.ppl_count }}</td>
-                                {% for member in members %}
-                                {% if order_item in member.excluded_food.all %}
-                                <td>0</td>
-                                {% else %}
                                 <td>{{ order_item.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
-                                {% endif %}
-                                {% endfor %}
                             </tr>
                         {% endfor %}
                         <tr>

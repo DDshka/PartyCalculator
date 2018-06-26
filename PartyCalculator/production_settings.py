@@ -151,9 +151,9 @@ STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 
 # Misc
-PROTOCOL = 'http://'
-HOST = 'localhost'
-PORT = '8000'
+PROTOCOL = 'https://'
+HOST = 'partycalculator.herokuapp.com'
+PORT = None
 WEBSITE_URL = PROTOCOL + HOST
 
 LOGIN_URL = 'login'
@@ -162,12 +162,10 @@ LOGIN_REDIRECT_URL = 'home'
 
 
 # REDIS related settings
-REDIS_HOST = os.environ.get('REDIS_HOST', HOST)
-REDIS_PORT = os.environ.get('REDIS_PORT', '6300')
-BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+BROKER_URL = config('REDIS_URL')
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
 CELERY_BROKER_URL = BROKER_URL
-CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_RESULT_BACKEND = config('REDIS_URL')
 
 
 # EMAIL SETTINGS
