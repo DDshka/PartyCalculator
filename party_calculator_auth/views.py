@@ -3,7 +3,7 @@ from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render, redirect, render_to_response
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView
@@ -77,7 +77,7 @@ class SignUpView(CreateView):
             kwargs = {
                 SignInForm.form_name: form
             }
-            return render_to_response(self.template_name, self.get_context_data(**kwargs))
+            return render(request, self.template_name, self.get_context_data(**kwargs))
 
         form.save()
         return redirect(reverse_lazy('home'))

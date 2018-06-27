@@ -169,7 +169,11 @@ CELERY_RESULT_BACKEND = config('REDIS_URL')
 
 
 # EMAIL SETTINGS
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('MAILGUN_SMTP_SERVER', default='')
+EMAIL_PORT = config('MAILGUN_SMTP_PORT', default='')
+EMAIL_HOST_USER = config('MAILGUN_SMTP_LOGIN', default='')
+EMAIL_HOST_PASSWORD = config('MAILGUN_SMTP_PASSWORD', default='')
 
 
 # Django social OAuth app
@@ -202,7 +206,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 # Google reCAPTCHA
-CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", "0") == "1"
+CAPTCHA_ENABLED = config('CAPTCHA_ENABLED', default=False, cast=bool)
 GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY',
                                            '6LdCel8UAAAAAHUTjJsHpG2NQCeVMXJQEHeFPg_2')
 GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY',

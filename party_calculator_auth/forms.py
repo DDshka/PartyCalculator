@@ -86,7 +86,7 @@ class SignInForm(forms.ModelForm):
 
         user.verification = Code.objects.create()
 
-        from PartyCalculator.settings import HOST, WEBSITE_URL
+        from PartyCalculator.production_settings import HOST, WEBSITE_URL
         from party_calculator_auth.views import VerificationView
         verification_url = reverse(VerificationView.name,
                                    kwargs={'verification_code': user.verification.code})

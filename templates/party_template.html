@@ -2,6 +2,19 @@
 
 {% block meta %}
     {{ block.super }}
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $(function() {
+            $("#id_info").autocomplete({
+                source: "{% url 'profile-list-by-term' %}",
+                minLength: 2,
+                select: function(event, ui) {
+                    console.log(ui)
+                }
+            });
+        });
+    </script>
 {% endblock meta %}
 
 {% block content %}
