@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    {% block meta %} {% endblock meta %}
-    <title>Party calculator | {% block title %} {% endblock title %}</title>
     {% include 'snippets/links.html' %}
+    {% block meta %} {% endblock meta %}
+    <title>{% block title %} {% endblock title %}</title>
 </head>
 <body>
     <div class="jumbotron">
