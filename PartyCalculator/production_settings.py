@@ -192,6 +192,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY',
                                                '423512986764-sd7idds82np892v0mhqupip6hce3thpr.apps.googleusercontent.com')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET',
                                                   '287TH_jTsK4W9tBZt8LFerKi')
+SOCIAL_AUTH_GOOGLE_OAUTH2_USE_DEPRECATED_API = True
+SOCIAL_AUTH_GOOGLE_PLUS_USE_DEPRECATED_API = True
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',

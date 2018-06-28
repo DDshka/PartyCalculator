@@ -92,12 +92,15 @@ class PartyCreateView(View):
 
     def post(self, request):
         form = CreatePartyForm(request.POST, user=request.user)
+        # TODO: show form error messages in more user-friendly way (time for ajax?)
         if not form.is_valid():
-            # TODO: handle form errors
-            pass
+            error_text = ''
+            for error in form.errors:
+                error_text += form.errors[error] + ' '
+            return HttpResponse(error_text)
 
         party = form.save()
-        return redirect(reverse('party', kwargs={'party_id': party.id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
 
 
 class PartyCreateFromExisting(View):
@@ -106,11 +109,15 @@ class PartyCreateFromExisting(View):
     def post(self, request):
         form = CreatePartyFromExistingForm(request.POST, user=request.user)
         if not form.is_valid():
-            # TODO: handle form errors
-            return redirect(reverse('home'))
+            # TODO: show form error messages in more user-friendly way (time for ajax?)
+            if not form.is_valid():
+                error_text = ''
+                for error in form.errors:
+                    error_text += form.errors[error] + ' '
+                return HttpResponse(error_text)
 
         party = form.save()
-        return redirect(reverse('party', kwargs={'party_id': party.id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
 
 
 class PartyDelete(View):
@@ -120,7 +127,7 @@ class PartyDelete(View):
         party = PartyService().get(id=party_id)
         PartyService().delete(party)
 
-        return redirect(reverse('home'))
+        return redirect(reverse(HomeView.name))
 
 
 class PartyAddFood(PartyAdminPermission, View):
@@ -134,7 +141,7 @@ class PartyAddFood(PartyAdminPermission, View):
         food = FoodService().get(id=food_id)
         PartyService().order_food(party, food, quantity)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyAddCustomFood(PartyAdminPermission, View):
@@ -151,7 +158,7 @@ class PartyAddCustomFood(PartyAdminPermission, View):
             return PartyView.as_view()(request, **kwargs)
 
         form.save()
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyRemoveFood(PartyAdminPermission, View):
@@ -163,7 +170,7 @@ class PartyRemoveFood(PartyAdminPermission, View):
         order_item = OrderService().get(id=order_item_id)
         PartyService().remove_from_order(order_item)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyExcludeFood(PartyMemberPermission, View):
@@ -177,7 +184,7 @@ class PartyExcludeFood(PartyMemberPermission, View):
         order_item = OrderService().get(id=order_item_id)
         MemberService().member_exclude_food(profile, order_item)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyIncludeFood(PartyMemberPermission, View):
@@ -191,7 +198,7 @@ class PartyIncludeFood(PartyMemberPermission, View):
         order_item = OrderService().get(id=order_item_id)
         MemberService().member_include_food(profile, order_item)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyInvite(PartyAdminPermission, View):
@@ -229,7 +236,7 @@ class PartyKickMember(PartyAdminPermission, View):
         member = MemberService().get(id=member_id)
         PartyService().remove_member_from_party(member)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartySponsor(PartyMemberPermission, View):
@@ -251,7 +258,7 @@ class PartySponsor(PartyMemberPermission, View):
         amount = form.cleaned_data.get('amount')
         PartyService().sponsor_party(member, amount)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyMakeInactive(PartyAdminPermission, View):
@@ -261,7 +268,7 @@ class PartyMakeInactive(PartyAdminPermission, View):
         party = PartyService().get(id=party_id)
         PartyService().set_state(party, Party.INACTIVE)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyGrantOwnership(PartyAdminPermission, View):
@@ -272,7 +279,7 @@ class PartyGrantOwnership(PartyAdminPermission, View):
         member = MemberService().get(id=member_id)
         MemberService().set_owner(member, True)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 class PartyRevokeOwnership(View):
@@ -283,7 +290,7 @@ class PartyRevokeOwnership(View):
         member = MemberService().get(id=member_id)
         MemberService().set_owner(member, False)
 
-        return redirect(reverse('party', kwargs={'party_id': party_id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party_id}))
 
 
 # ---------------------------------
@@ -310,11 +317,15 @@ class TemplateCreate(View):
     def post(self, request):
         form = CreateTemplateForm(request.POST, user=request.user)
         if not form.is_valid():
-            # TODO: handle template creation form errors
-            return redirect(reverse('home'))
+            # TODO: show form error messages in more user-friendly way (time for ajax?)
+            if not form.is_valid():
+                error_text = ''
+                for error in form.errors:
+                    error_text += form.errors[error] + ' '
+                return HttpResponse(error_text)
 
         template_party = form.save()
-        return redirect(reverse('template', kwargs={'template_id': template_party.id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_party.id}))
 
 
 class TemplateCreateFromParty(View):
@@ -323,7 +334,7 @@ class TemplateCreateFromParty(View):
     def post(self, request, party_id: int):
         party = PartyService().get(id=party_id)
         template_party = TemplatePartyService().create_from_existing(party)
-        return redirect(reverse('template', kwargs={'template_id': template_party.id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_party.id}))
 
 
 class TemplateDelete(View):
@@ -333,7 +344,7 @@ class TemplateDelete(View):
         party = TemplatePartyService().get(id=template_id)
         TemplatePartyService().delete(party)
 
-        return redirect(reverse('templates'))
+        return redirect(reverse(TemplatesListView.name))
 
 
 class TemplatePartyView(TemplateView):
@@ -397,7 +408,7 @@ class TemplateAddMemberView(View):
             message = 'This member is already in template'
             return HttpResponse(message)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateKickMember(View):
@@ -408,7 +419,7 @@ class TemplateKickMember(View):
         member = TemplateMemberService().get(id=member_id)
         TemplatePartyService().remove_member_from_template(member)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateAddFood(View):
@@ -422,7 +433,7 @@ class TemplateAddFood(View):
         food = FoodService().get(id=food_id)
         TemplatePartyService().order_food(template, food, quantity)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateAddCustomFood(View):
@@ -439,7 +450,7 @@ class TemplateAddCustomFood(View):
             return TemplatePartyView.as_view()(self.request, **kwargs)
 
         form.save()
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateSetInactive(View):
@@ -449,7 +460,7 @@ class TemplateSetInactive(View):
         template = TemplatePartyService().get(id=template_id)
         TemplatePartyService().set_state(template, TemplateParty.INACTIVE)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateSetActive(View):
@@ -459,7 +470,7 @@ class TemplateSetActive(View):
         template = TemplatePartyService().get(id=template_id)
         TemplatePartyService().set_state(template, TemplateParty.ACTIVE)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateGrantOwnership(View):
@@ -470,7 +481,7 @@ class TemplateGrantOwnership(View):
         member = TemplateMemberService().get(id=member_id)
         TemplateMemberService().set_owner(member, True)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateRevokeOwnership(View):
@@ -481,7 +492,7 @@ class TemplateRevokeOwnership(View):
         member = TemplateMemberService().get(id=member_id)
         TemplateMemberService().set_owner(member, False)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateRemoveFood(View):
@@ -493,7 +504,7 @@ class TemplateRemoveFood(View):
         order_item = TemplateOrderService().get(id=order_item_id)
         TemplatePartyService().remove_from_order(order_item)
 
-        return redirect(reverse('template', kwargs={'template_id': template_id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 
 class TemplateSetFrequency(View):
@@ -513,10 +524,11 @@ class TemplateSetFrequency(View):
         pattern = form.cleaned_data.get('pattern')
         TemplatePartyService().set_frequency(template, pattern)
 
-        return redirect(reverse('template', kwargs={'template_id': template.id}))
+        return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template.id}))
 
 
 class OmegaLul(View):
+    """Test class for templates"""
     name = 'create-party-from-template'
 
     def post(self, request, **kwargs):
@@ -525,4 +537,4 @@ class OmegaLul(View):
 
         party = PartyService().create_from_template(template)
 
-        return redirect(reverse('party', kwargs={'party_id': party.id}))
+        return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
