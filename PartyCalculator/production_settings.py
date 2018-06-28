@@ -169,11 +169,11 @@ CELERY_RESULT_BACKEND = config('REDIS_URL')
 
 
 # EMAIL SETTINGS
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('MAILGUN_SMTP_SERVER', default='')
-EMAIL_PORT = config('MAILGUN_SMTP_PORT', default='')
-EMAIL_HOST_USER = config('MAILGUN_SMTP_LOGIN', default='')
-EMAIL_HOST_PASSWORD = config('MAILGUN_SMTP_PASSWORD', default='')
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', default='')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = True
 
 
 # Django social OAuth app
