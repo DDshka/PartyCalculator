@@ -11,9 +11,7 @@
         <h1><a href="{% url 'home' %}">Party Calculator</a></h1>
     </div>
     {% block errors %}
-        {% for message in messages %}
-            {{ message }}
-        {% endfor %}
+
     {% endblock %}
     {% block content %} {% endblock content %}
 </body>
