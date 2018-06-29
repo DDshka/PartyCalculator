@@ -8,7 +8,7 @@ from party_calculator.common.party import PartyMemberPermission, PartyAdminPermi
 from party_calculator.exceptions import MemberAlreadyInPartyException, TemplatePartyScheduleIsNotSetException
 from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
     CreateTemplateForm, AddCustomFoodToPartyForm, SponsorPartyForm, AddMemberToTemplateForm, SetFrequencyForm, \
-    AddCustomFoodToTemplateForm, PartyMemberFormSet
+    AddCustomFoodToTemplateForm
 from party_calculator.models import Food, TemplateParty, Party
 from party_calculator.services.calculator import calculate
 from party_calculator.services.food import FoodService
@@ -39,7 +39,7 @@ class HomeView(TemplateView):
             context[CreatePartyForm.form_name] = CreatePartyForm(user=self.request.user)
             context[CreatePartyFromExistingForm.form_name] = CreatePartyFromExistingForm(user=self.request.user)
 
-            context['formset'] = PartyMemberFormSet()
+            # context['formset'] = PartyMemberFormSet()
 
         return context
 
@@ -94,7 +94,7 @@ class PartyCreateView(View):
 
     def post(self, request):
         create_party_form = CreatePartyForm(request.POST, user=request.user)
-        members_form = PartyMemberFormSet(request.POST)
+        # members_form = PartyMemberFormSet(request.POST)
 
         # TODO: show form error messages in more user-friendly way (time for ajax?)
         if not create_party_form.is_valid():
@@ -102,17 +102,19 @@ class PartyCreateView(View):
             for error in create_party_form.errors:
                 error_text += create_party_form.errors[error] + ' '
             return HttpResponse(error_text)
-        elif not members_form.is_valid():
-            return HttpResponse('It seems you entered the same names')
+        # elif not members_form.is_valid():
+        #     return HttpResponse('It seems you entered the same names')
         else:
-            name = create_party_form.cleaned_data.get('name')
-            creator = ProfileService().get(id=request.user.id)
-            members = []
-            for form in members_form:
-                members.append(form.cleaned_data.get('profile'))
+            pass
+            # name = create_party_form.cleaned_data.get('name')
+            # creator = ProfileService().get(id=request.user.id)
+            # members = []
+            # for form in members_form:
+            #     members.append(form.cleaned_data.get('profile'))
+            #
+            # party = PartyService().create(name=name, creator=creator, members=members)
 
-            party = PartyService().create(name=name, creator=creator, members=members)
-
+        party = create_party_form.save()
         return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
 
 

@@ -50,22 +50,22 @@
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=create_party_form %}
-                    {% include 'snippets/dynamic_fields_form.html' with formset=formset %}
+{#                    {% include 'snippets/dynamic_fields_form.html' with formset=formset %}#}
 
 
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">Create party</button>
                     </div>
                 </form>
-                <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.formset/1.2.2/jquery.formset.min.js"></script>
-                <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
-                <script type="text/javascript">
-                    $('.formset_row').formset({
-                        addText: 'add party member',
-                        deleteText: 'remove'
-                    });
-                </script>
+{#                <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />#}
+{#                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.formset/1.2.2/jquery.formset.min.js"></script>#}
+{#                <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>#}
+{#                <script type="text/javascript">#}
+{#                    $('.formset_row').formset({#}
+{#                        addText: 'add party member',#}
+{#                        deleteText: 'remove'#}
+{#                    });#}
+{#                </script>#}
             </div>
         </div>
 

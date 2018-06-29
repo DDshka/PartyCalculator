@@ -14,12 +14,9 @@ from party_calculator_auth.models import Profile
 class CreatePartyForm(forms.ModelForm):
     class Meta:
         model = Party
-        fields = ('name',)
+        fields = ('name', 'members')
 
     form_name = 'create_party_form'
-
-    # count = forms.CharField(widget=forms.HiddenInput(attrs={'value': '1'}))
-    # member0 = forms.CharField()
 
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
@@ -29,6 +26,8 @@ class CreatePartyForm(forms.ModelForm):
         self.fields['name'].widget = forms.widgets.TextInput(
             attrs={'placeholder': 'Enter party name here...'}
         )
+
+        self.fields['members'].queryset = Profile.objects.exclude(id=user.id)
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
