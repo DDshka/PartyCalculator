@@ -14,7 +14,7 @@ from party_calculator_auth.models import Profile
 class CreatePartyForm(forms.ModelForm):
     class Meta:
         model = Party
-        fields = ('name', 'members')
+        fields = ('name',)
 
     form_name = 'create_party_form'
 
@@ -27,7 +27,7 @@ class CreatePartyForm(forms.ModelForm):
             attrs={'placeholder': 'Enter party name here...'}
         )
 
-        self.fields['members'].queryset = Profile.objects.exclude(id=user.id)
+        # self.fields['members'].queryset = Profile.objects.exclude(id=user.id)
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -55,7 +55,14 @@ class MemberForm(forms.ModelForm):
 
     def clean_profile(self):
         username = self.cleaned_data.get('profile')
-        return Profile.objects.get(username=username)
+
+        if not username:
+            return None
+
+        try:
+            return Profile.objects.get(username=username)
+        except Profile.DoesNotExist:
+            raise ValidationError("We cant find such user ({0})".format(username))
 
 
 class BasePartyMemberFormSet(BaseFormSet):
@@ -67,14 +74,19 @@ class BasePartyMemberFormSet(BaseFormSet):
         if any(self.errors):
             return
         profiles = []
+        creator = Profile.objects.get(id=self.user.id)
         for form in self.forms:
             profile = form.cleaned_data.get('profile')
             if profile in profiles:
-                raise ValidationError('Users in a set must have distinct usernames')
+                raise ValidationError('There are same users in the set')
+            if creator == profile:
+                raise ValidationError('Do not enter creator as a member! It will be added automatically\n'
+                                      'Current logged in user is treated as a party creator')
+
             profiles.append(profile)
 
 
-PartyMemberFormSet = formset_factory(MemberForm, formset=BasePartyMemberFormSet)
+PartyMemberFormSet = formset_factory(MemberForm, formset=BasePartyMemberFormSet, validate_max=True)
 
 
 class CreatePartyFromExistingForm(forms.ModelForm):

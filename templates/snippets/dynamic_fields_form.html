@@ -4,7 +4,7 @@
 {{ formset.management_form }}
 {% for form in formset.forms %}
     {% for field in form.visible_fields %}
-        <div class="formset_row form-group">
+        <div class="formset_row form-inline">
             <div></div>
         {{ field.label_tag }}
         {% if form.is_bound %}

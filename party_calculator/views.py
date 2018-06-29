@@ -4,11 +4,12 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView, ListView
 
+from party_calculator.common import get_form_errors_as_str, get_formset_errors_as_str
 from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
 from party_calculator.exceptions import MemberAlreadyInPartyException, TemplatePartyScheduleIsNotSetException
 from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
     CreateTemplateForm, AddCustomFoodToPartyForm, SponsorPartyForm, AddMemberToTemplateForm, SetFrequencyForm, \
-    AddCustomFoodToTemplateForm
+    AddCustomFoodToTemplateForm, PartyMemberFormSet
 from party_calculator.models import Food, TemplateParty, Party
 from party_calculator.services.calculator import calculate
 from party_calculator.services.food import FoodService
@@ -39,7 +40,7 @@ class HomeView(TemplateView):
             context[CreatePartyForm.form_name] = CreatePartyForm(user=self.request.user)
             context[CreatePartyFromExistingForm.form_name] = CreatePartyFromExistingForm(user=self.request.user)
 
-            # context['formset'] = PartyMemberFormSet()
+            context['formset'] = PartyMemberFormSet()
 
         return context
 
@@ -94,27 +95,26 @@ class PartyCreateView(View):
 
     def post(self, request):
         create_party_form = CreatePartyForm(request.POST, user=request.user)
-        # members_form = PartyMemberFormSet(request.POST)
+        members_form = PartyMemberFormSet(request.POST, user=request.user)
 
         # TODO: show form error messages in more user-friendly way (time for ajax?)
         if not create_party_form.is_valid():
-            error_text = ''
-            for error in create_party_form.errors:
-                error_text += create_party_form.errors[error] + ' '
-            return HttpResponse(error_text)
-        # elif not members_form.is_valid():
-        #     return HttpResponse('It seems you entered the same names')
+            errors = get_form_errors_as_str(create_party_form)
+            return HttpResponse(errors)
+        elif not members_form.is_valid():
+            errors = get_formset_errors_as_str(members_form)
+            return HttpResponse(errors)
         else:
-            pass
-            # name = create_party_form.cleaned_data.get('name')
-            # creator = ProfileService().get(id=request.user.id)
-            # members = []
-            # for form in members_form:
-            #     members.append(form.cleaned_data.get('profile'))
-            #
-            # party = PartyService().create(name=name, creator=creator, members=members)
+            name = create_party_form.cleaned_data.get('name')
+            creator = ProfileService().get(id=request.user.id)
+            members = []
+            for form in members_form:
+                profile = form.cleaned_data.get('profile')
+                if profile:
+                    members.append(profile)
 
-        party = create_party_form.save()
+            party = PartyService().create(name=name, creator=creator, members=members)
+
         return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
 
 
@@ -126,10 +126,8 @@ class PartyCreateFromExisting(View):
         if not form.is_valid():
             # TODO: show form error messages in more user-friendly way (time for ajax?)
             if not form.is_valid():
-                error_text = ''
-                for error in form.errors:
-                    error_text += form.errors[error] + ' '
-                return HttpResponse(error_text)
+                errors = get_form_errors_as_str(form)
+                return HttpResponse(errors)
 
         party = form.save()
         return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
@@ -334,10 +332,8 @@ class TemplateCreate(View):
         if not form.is_valid():
             # TODO: show form error messages in more user-friendly way (time for ajax?)
             if not form.is_valid():
-                error_text = ''
-                for error in form.errors:
-                    error_text += form.errors[error] + ' '
-                return HttpResponse(error_text)
+                errors = get_form_errors_as_str(form)
+                return HttpResponse(errors)
 
         template_party = form.save()
         return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_party.id}))
