@@ -116,7 +116,7 @@
                     </tr>
                     {% endfor %}
                 </table>
-                <form class="form-horizontal" action="{% url 'template-set-frequency' template.id %}">
+                <form class="form-horizontal" action="{% url 'template-add-custom-food' template.id %}">
                         {% csrf_token %}
 
                         {% include 'snippets/bs_form.html' with form=add_custom_food_to_template_form %}

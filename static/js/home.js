@@ -1,5 +1,5 @@
 $(function() {
-    $('input[name^=member_]').on('input', function() {
+    $('input[id^=id_member]').on('input', function() {
         var $this = $(this)
         var $clone = $this.clone()
 

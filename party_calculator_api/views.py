@@ -15,9 +15,8 @@ def profile_list(request):
         return JsonResponse(serializer.data, safe=False)
 
 
-@csrf_exempt
 def profile_list_by_term(request):
-    if request.is_ajax():
+    if request.is_ajax() :
         q = request.GET.get('term', '')
         profiles = Profile.objects.filter(username__icontains=q)[:20]
         results = []

@@ -5,10 +5,10 @@ from django.views import View
 from django.views.generic import TemplateView, ListView
 
 from party_calculator.common.party import PartyMemberPermission, PartyAdminPermission
-from party_calculator.exceptions import MemberAlreadyInPartyException
+from party_calculator.exceptions import MemberAlreadyInPartyException, TemplatePartyScheduleIsNotSetException
 from party_calculator.forms import CreatePartyForm, AddMemberToPartyForm, CreatePartyFromExistingForm, \
     CreateTemplateForm, AddCustomFoodToPartyForm, SponsorPartyForm, AddMemberToTemplateForm, SetFrequencyForm, \
-    AddCustomFoodToTemplateForm
+    AddCustomFoodToTemplateForm, PartyMemberFormSet
 from party_calculator.models import Food, TemplateParty, Party
 from party_calculator.services.calculator import calculate
 from party_calculator.services.food import FoodService
@@ -38,6 +38,8 @@ class HomeView(TemplateView):
 
             context[CreatePartyForm.form_name] = CreatePartyForm(user=self.request.user)
             context[CreatePartyFromExistingForm.form_name] = CreatePartyFromExistingForm(user=self.request.user)
+
+            context['formset'] = PartyMemberFormSet()
 
         return context
 
@@ -91,15 +93,26 @@ class PartyCreateView(View):
     name = 'create-party'
 
     def post(self, request):
-        form = CreatePartyForm(request.POST, user=request.user)
-        # TODO: show form error messages in more user-friendly way (time for ajax?)
-        if not form.is_valid():
-            error_text = ''
-            for error in form.errors:
-                error_text += form.errors[error] + ' '
-            return HttpResponse(error_text)
+        create_party_form = CreatePartyForm(request.POST, user=request.user)
+        members_form = PartyMemberFormSet(request.POST)
 
-        party = form.save()
+        # TODO: show form error messages in more user-friendly way (time for ajax?)
+        if not create_party_form.is_valid():
+            error_text = ''
+            for error in create_party_form.errors:
+                error_text += create_party_form.errors[error] + ' '
+            return HttpResponse(error_text)
+        elif not members_form.is_valid():
+            return HttpResponse('It seems you entered the same names')
+        else:
+            name = create_party_form.cleaned_data.get('name')
+            creator = ProfileService().get(id=request.user.id)
+            members = []
+            for form in members_form:
+                members.append(form.cleaned_data.get('profile'))
+
+            party = PartyService().create(name=name, creator=creator, members=members)
+
         return redirect(reverse(PartyView.name, kwargs={'party_id': party.id}))
 
 
@@ -468,8 +481,10 @@ class TemplateSetActive(View):
 
     def get(self, request, template_id: int, **kwargs):
         template = TemplatePartyService().get(id=template_id)
-        TemplatePartyService().set_state(template, TemplateParty.ACTIVE)
-
+        try:
+            TemplatePartyService().set_state(template, TemplateParty.ACTIVE)
+        except TemplatePartyScheduleIsNotSetException:
+            return HttpResponse("Set template schedule first")
         return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template_id}))
 
 

@@ -1,21 +1,25 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import widgets
+from django.forms import widgets, BaseFormSet, formset_factory
 
-from party_calculator.models import Party, Food, TemplateParty, OrderedFood
+from party_calculator.models import Party, Food, TemplateParty, OrderedFood, Membership
 from party_calculator.services.order import OrderService
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
 from party_calculator.services.template_order import TemplateOrderService
 from party_calculator.services.template_party import TemplatePartyService
+from party_calculator_auth.models import Profile
 
 
 class CreatePartyForm(forms.ModelForm):
     class Meta:
         model = Party
-        fields = ('name', 'members')
+        fields = ('name',)
 
     form_name = 'create_party_form'
+
+    # count = forms.CharField(widget=forms.HiddenInput(attrs={'value': '1'}))
+    # member0 = forms.CharField()
 
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
@@ -25,10 +29,6 @@ class CreatePartyForm(forms.ModelForm):
         self.fields['name'].widget = forms.widgets.TextInput(
             attrs={'placeholder': 'Enter party name here...'}
         )
-
-        self.fields['members'].label = ''
-        self.fields['members'].required = False
-        self.fields['members'].queryset = ProfileService().get_all(excluding={'id': self.user.id})
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -45,6 +45,37 @@ class CreatePartyForm(forms.ModelForm):
         party = PartyService().create(name=name, creator=creator, members=members)
 
         return party
+
+
+class MemberForm(forms.ModelForm):
+    class Meta:
+        model = Membership
+        fields = ('profile',)
+
+    profile = forms.CharField()
+
+    def clean_profile(self):
+        username = self.cleaned_data.get('profile')
+        return Profile.objects.get(username=username)
+
+
+class BasePartyMemberFormSet(BaseFormSet):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super(BasePartyMemberFormSet, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if any(self.errors):
+            return
+        profiles = []
+        for form in self.forms:
+            profile = form.cleaned_data.get('profile')
+            if profile in profiles:
+                raise ValidationError('Users in a set must have distinct usernames')
+            profiles.append(profile)
+
+
+PartyMemberFormSet = formset_factory(MemberForm, formset=BasePartyMemberFormSet)
 
 
 class CreatePartyFromExistingForm(forms.ModelForm):
@@ -131,13 +162,18 @@ class SetFrequencyForm(forms.Form):
         return pattern
 
 
-class CreateTemplateForm(CreatePartyForm):
+class CreateTemplateForm(forms.ModelForm):
+    class Meta:
+        model = TemplateParty
+        fields = ('name', 'members', 'food')
+
     form_name = 'create_template_form'
 
     food = forms.ModelMultipleChoiceField(queryset=Food.objects.all())
 
     def __init__(self, *args, user=None, **kwargs):
-        super(CreateTemplateForm, self).__init__(*args, user=user, **kwargs)
+        self.user = user
+        super(CreateTemplateForm, self).__init__(*args, **kwargs)
 
         self.fields['food'].required = False
         self.fields['members'].required = False
