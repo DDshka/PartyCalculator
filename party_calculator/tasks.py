@@ -20,7 +20,7 @@ def create_party(template_id):
 
     if TemplatePartyService().has_active_parties(template):
         logger.error('Task can`t be run because this template(id={0}) has active parties'
-                    .format(template_id))
+                     .format(template_id))
         raise TemplatePartyHasActiveRelatedPartyException()
 
     PartyService().create_from_template(template)

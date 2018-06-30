@@ -1,13 +1,22 @@
 from django.conf.urls import url
 
-from party_calculator.views import HomeView, PartyView, PartyCreateView, \
-    PartyCreateFromExisting, PartyAddFood, PartyInvite, \
-    PartyRemoveFood, PartyKickMember, PartyExcludeFood, \
-    PartyIncludeFood, PartySponsor, PartyMakeInactive, TemplatesListView, TemplatePartyView, TemplateCreate, \
-    TemplateAddMemberView, TemplateKickMember, TemplateAddFood, TemplateSetInactive, TemplateSetActive, \
-    TemplateGrantOwnership, TemplateRevokeOwnership, TemplateRemoveFood, TemplateSetFrequency, OmegaLul, \
-    TemplateCreateFromParty, PartyDelete, TemplateDelete, PartyAddCustomFood, TemplateAddCustomFood, \
-    PartyGrantOwnership, PartyRevokeOwnership
+from party_calculator.views import HomeView
+from party_calculator.views.parties import PartyCreateView, PartyCreateFromExisting, \
+    PartyDelete, PartyMakeInactive, \
+    PartyRevokeOwnership, PartyGrantOwnership, \
+    PartySponsor, PartyIncludeFood, \
+    PartyExcludeFood, PartyKickMember, \
+    PartyRemoveFood, PartyInvite, \
+    PartyAddCustomFood, PartyAddFood, \
+    PartyView
+from party_calculator.views.templates import TemplateDelete, TemplateSetFrequency, \
+    TemplateRevokeOwnership, \
+    TemplateGrantOwnership, TemplateSetActive, \
+    TemplateSetInactive, TemplateRemoveFood, \
+    TemplateAddCustomFood, TemplateAddFood, \
+    TemplateKickMember, TemplateAddMemberView, \
+    TemplatePartyView, TemplateCreateFromParty, \
+    TemplateCreate, TemplatesListView
 
 urlpatterns = [
     url(r'^$', HomeView.as_view(),
@@ -101,9 +110,6 @@ urlpatterns = [
 
     url(r'^templates/(?P<template_id>\d+)/frequency', TemplateSetFrequency.as_view(),
         name=TemplateSetFrequency.name),
-
-    url(r'^create/party-from-template$', OmegaLul.as_view(),
-        name=OmegaLul.name),
 
     url(r'^templates/(?P<template_id>\d+)/delete', TemplateDelete.as_view(),
         name=TemplateDelete.name),

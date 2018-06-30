@@ -1,0 +1,10 @@
+<div class="container">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <strong>
+                {{ message.tags|capfirst }}!
+            </strong>
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>

@@ -3,9 +3,16 @@
 {% block meta %}
     {{ block.super }}
     {% load static %}
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.formset/1.2.2/jquery.formset.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 {% endblock meta %}
 
 {% block title %} Home {% endblock title %}
+
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock errors %}
 
 {% block content %}
     <div class="container">
@@ -46,7 +53,7 @@
 
         <div class="row">
             <div class="col-lg-4">
-                <form class="form-horizontal" action="{% url 'create-party' %}" method="post">
+                <form class="form-horizontal" action="{% url 'party-create' %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=create_party_form %}
@@ -57,9 +64,6 @@
                         <button type="submit" class="btn btn-primary">Create party</button>
                     </div>
                 </form>
-                <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.formset/1.2.2/jquery.formset.min.js"></script>
-                <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
                 <script type="text/javascript">
                     var formset_row = $('.formset_row')
                     formset_row.formset({
@@ -83,7 +87,7 @@
 
         <div class="row">
            <div class="col-lg-4">
-                <form class="form-horizontal" action="{% url 'create-party-from-existing' %}" method="post">
+                <form class="form-horizontal" action="{% url 'party-create-from-existing' %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=create_party_from_existing_form %}

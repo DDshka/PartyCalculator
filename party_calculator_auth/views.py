@@ -12,7 +12,7 @@ from social_django.models import UserSocialAuth
 from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY, CAPTCHA_ENABLED
 from party_calculator.services.profile import ProfileService
 from party_calculator_auth.forms import LoginForm, SignInForm
-from party_calculator_auth.models import Profile
+from party_calculator_auth.models import Profile, Code
 
 
 class LoginView(View):
@@ -100,6 +100,7 @@ class LogoutView(View):
     name = 'logout'
 
     def get(self, request):
+        messages.success(request, 'You successfully logged out')
         logout(request)
 
         return redirect(reverse_lazy('home'))
@@ -109,12 +110,17 @@ class VerificationView(View):
     name = 'verification'
 
     def get(self, request, verification_code):
-        verified = ProfileService().activate_profile(verification_code)
+        message = "Your profile has been successfully activated."
 
-        if not verified:
-            return HttpResponse("It seems your profile has been already activated")
+        from django.core.exceptions import ValidationError
+        try:
+            verified = ProfileService().activate_profile(verification_code)
+            if not verified:
+                message = "It seems your profile has been already activated"
+        except (Code.DoesNotExist, ValidationError):
+            message = 'Such verification code does not exist'
 
-        return HttpResponse("Your profile has been successfully activated.")
+        return HttpResponse(message)
 
 
 # TODO: recode settings and password methods as classbased views

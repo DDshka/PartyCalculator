@@ -3,8 +3,6 @@
 {% block meta %}
     {{ block.super }}
     {% load templatehelpers %}
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script type="text/javascript">
@@ -24,6 +22,10 @@
     {{ party }}
 {% endblock title %}
 
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
@@ -31,19 +33,21 @@
                 <h1>{{ party }}{% if not is_active %} | Inactive {% endif %}</h1>
                 {% if current_member.is_owner %}
                     {% if is_active %}
-                        <form action="{% url 'party-set-inactive' party.id %}">
-                            <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
-                        </form>
+                    <form action="{% url 'party-set-inactive' party.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
+                    </form>
                     {% endif %}
 
                     {% if not has_template %}
-                    <form action="{% url 'create-template-from-party' party.id %}" method="post">
+                    <form action="{% url 'template-create-from-party' party.id %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn">Make a template from this party</button>
                     </form>
                     {% endif %}
 
-                    <form action="{% url 'delete-party' party.id %}">
+                    <form action="{% url 'party-delete' party.id %}" method="post">
+                        {% csrf_token %}
                         <button type="submit" class="btn btn-danger">Delete party</button>
                     </form>
                 {% endif %}
@@ -53,7 +57,7 @@
             </div>
             <div class="col-lg-4">
                 {% if is_active %}
-                <form class="form-inline" action="{% url 'sponsor-party' party.id %}">
+                <form class="form-inline" action="{% url 'party-sponsor' party.id %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=sponsor_party_form %}
@@ -82,7 +86,8 @@
                             {% if current_member.is_owner and member.profile != party.created_by %}
                                 {% if current_member.is_owner %}
                                     <td>
-                                        <form action="{% url 'kick-member' party.id %}">
+                                        <form action="{% url 'party-kick-member' party.id %}" method="post">
+                                            {% csrf_token %}
                                             <input type="hidden" name="member" value="{{ member.id }}">
                                             <button type="submit" class="btn btn-danger">Kick</button>
                                         </form>
@@ -91,14 +96,16 @@
 
                                 {% if member.is_owner %}
                                     <td>
-                                        <form action="{% url 'party-revoke-ownership' party.id %}">
+                                        <form action="{% url 'party-revoke-ownership' party.id %}" method="post">
+                                            {% csrf_token %}
                                             <input type="hidden" name="member" value="{{ member.id }}">
                                             <button type="submit" class="btn btn-danger">Revoke ownership</button>
                                         </form>
                                     </td>
                                 {% else %}
                                     <td>
-                                        <form action="{% url 'party-grant-ownership' party.id %}">
+                                        <form action="{% url 'party-grant-ownership' party.id %}" method="post">
+                                            {% csrf_token %}
                                             <input type="hidden" name="member" value="{{ member.id }}">
                                             <button type="submit" class="btn btn-success">Grant ownership</button>
                                         </form>
@@ -110,7 +117,7 @@
                     {% endfor %}
                 </table>
                 {% if is_active %}
-                <form class="form-inline" action="{% url 'invite-member' party.id %}">
+                <form class="form-inline" action="{% url 'party-invite-member' party.id %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=add_member_to_party_form %}
@@ -138,13 +145,15 @@
                         {% if is_active %}
                         <td>
                             {% if order_item|is_excluded:current_member %}
-                            <form action="{% url 'include-food' party.id %}" class="form-inline" style="display: inline">
+                            <form action="{% url 'include-food' party.id %}" method="post" class="form-inline" style="display: inline">
+                                {% csrf_token %}
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-success">Include</button>
                                 <!--<i class="glyphicon glyphicon-plus-sign"></i>-->
                             </form>
                             {% else %}
-                            <form action="{% url 'exclude-food' party.id %}" style="display: inline">
+                            <form action="{% url 'exclude-food' party.id %}" method="post" style="display: inline">
+                                {% csrf_token %}
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-danger">Exclude</button>
                                 <!--<i class="glyphicon glyphicon-minus-sign"></i>-->
@@ -153,7 +162,8 @@
                         </td>
                         {% if current_member.is_owner %}
                         <td>
-                            <form action="{% url 'remove-food-from-party' party.id %}">
+                            <form action="{% url 'party-remove-food' party.id %}" method="post">
+                                {% csrf_token %}
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>
@@ -167,7 +177,7 @@
                     <h1>Party ordered nothing for now</h1>
                 {% endif %}
                 {% if is_active %}
-                <form class="form-horizontal" action="{% url 'add-custom-food-to-party' party.id %}">
+                <form class="form-horizontal" action="{% url 'party-add-custom-food' party.id %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=add_custom_food_to_party_form %}
@@ -185,7 +195,8 @@
                                 <tr>
                                     <td>{{ product }}</td>
                                     <td>{{ product.price }}</td>
-                                    <form action="{% url 'add-food-to-party' party.id %}">
+                                    <form action="{% url 'party-add-food' party.id %}" method="post">
+                                        {% csrf_token %}
                                         <input type="hidden" name="food" value="{{ product.id }}">
                                         <td><input type="number" min="1" value="1" name="quantity"></td>
                                         <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>

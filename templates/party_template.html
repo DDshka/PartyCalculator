@@ -19,6 +19,10 @@
 
 {% block title %} {{ template }} {% endblock title %}
 
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock errors %}
+
 {% block content %}
     <div class="container">
         <div class="row">
@@ -27,7 +31,7 @@
 
         <div class="row">
             <div class="col-lg-6">
-                <form class="form-inline" action="{% url 'template-set-frequency' template.id %}">
+                <form class="form-inline" action="{% url 'template-set-frequency' template.id %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=set_frequency_form %}
@@ -38,11 +42,13 @@
 
             <div class="col-lg-6">
                 {% if is_active %}
-                <form action="{% url 'template-set-inactive' template.id %}">
+                <form action="{% url 'template-set-inactive' template.id %}" method="post">
+                    {% csrf_token %}
                     <button class="btn btn-danger">Set inactive</button>
                 </form>
                 {% else %}
-                <form action="{% url 'template-set-active' template.id %}">
+                <form action="{% url 'template-set-active' template.id %}" method="post">
+                    {% csrf_token %}
                     <button class="btn btn-success">Set active</button>
                 </form>
                 {% endif %}
@@ -61,7 +67,8 @@
                         <td>{{ member.profile }}</td>
                         <td>
                             {% if not template.created_by == member.profile %}
-                            <form action="{% url 'template-kick-member' template.id %}">
+                            <form action="{% url 'template-kick-member' template.id %}" method="post">
+                                {% csrf_token %}
                                 <input type="hidden" name="member" value="{{ member.id }}">
                                 <button type="submit" class="btn btn-danger">Kick</button>
                             </form>
@@ -70,12 +77,14 @@
                         <td>
                         {% if not template.created_by == member.profile %}
                             {% if member.is_owner %}
-                                <form action="{% url 'template-revoke-ownership' template.id %}">
+                                <form action="{% url 'template-revoke-ownership' template.id %}" method="post">
+                                    {% csrf_token %}
                                     <input type="hidden" name="member" value="{{ member.id }}">
                                     <button type="submit" class="btn btn-danger">Revoke ownership</button>
                                 </form>
                             {% elif not member.is_owner %}
-                                <form action="{% url 'template-grant-ownership' template.id %}">
+                                <form action="{% url 'template-grant-ownership' template.id %}" method="post">
+                                    {% csrf_token %}
                                     <input type="hidden" name="member" value="{{ member.id }}">
                                     <button type="submit" class="btn btn-success">Grant ownership</button>
                                 </form>
@@ -85,7 +94,7 @@
                     </tr>
                     {% endfor %}
                 </table>
-                <form class="form-inline" action="{% url 'template-add-member' template.id %}">
+                <form class="form-inline" action="{% url 'template-add-member' template.id %}" method="post">
                     {% csrf_token %}
 
                     {% include 'snippets/bs_form.html' with form=add_member_to_template_form %}
@@ -110,15 +119,16 @@
                         <td>{{ order_item.quantity }}</td>
                         <td>{{ order_item.total }}</td>
                          <td>
-                            <form action="{% url 'template-remove-food' template.id %}">
-                                    <input type="hidden" name="order_item" value="{{ order_item.id }}">
-                                    <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
+                            <form action="{% url 'template-remove-food' template.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>
                         </td>
                     </tr>
                     {% endfor %}
                 </table>
-                <form class="form-horizontal" action="{% url 'template-add-custom-food' template.id %}">
+                <form class="form-horizontal" action="{% url 'template-add-custom-food' template.id %}" method="post">
                         {% csrf_token %}
 
                         {% include 'snippets/bs_form.html' with form=add_custom_food_to_template_form %}
@@ -132,7 +142,8 @@
                         <tr>
                             <td>{{ product }}</td>
                             <td>{{ product.price }}</td>
-                            <form action="{% url 'template-add-food' template.id %}">
+                            <form action="{% url 'template-add-food' template.id %}" method="post">
+                                {% csrf_token %}
                                 <input type="hidden" name="food" value="{{ product.id }}">
                                 <td><input type="number" min="1" value="1" name="quantity"></td>
                                 <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
