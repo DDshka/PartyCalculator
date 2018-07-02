@@ -51,7 +51,7 @@ class MemberForm(forms.ModelForm):
         model = Membership
         fields = ('profile',)
 
-    profile = forms.CharField()
+    profile = forms.CharField(label='Username')
 
     def clean_profile(self):
         username = self.cleaned_data.get('profile')
@@ -149,29 +149,29 @@ class AddMemberToTemplateForm(AddMemberToPartyForm):
     form_name = 'add_member_to_template_form'
 
 
-class SetFrequencyForm(forms.Form):
-    form_name = 'set_frequency_form'
+class SetScheduleForm(forms.ModelForm):
+    class Meta:
+        model = TemplateParty
+        fields = ('schedule',)
 
-    pattern = forms.CharField()
+    form_name = 'set_schedule_form'
 
     def __init__(self, *args, template=None, **kwargs):
-        super(SetFrequencyForm, self).__init__(*args, **kwargs)
-
         self.template = template
 
-        self.fields['pattern'].widget = forms.TextInput(
-            attrs={'placeholder': 'Enter crontab pattern here...'}
-        )
+        initial_schedule_value = None
+        if template.schedule:
+            initial_schedule_value = template.schedule.pk
 
-    def clean_pattern(self):
-        pattern = self.cleaned_data.get('pattern')
-        splitted = pattern.split(sep=' ')
-        # TODO: secure crontab
-        if len(splitted) < 5:
-            raise ValidationError("Crontab pattern must be made of 5 statements (e.g. * * * * *)")
+        super(SetScheduleForm, self).__init__(*args,
+                                              initial={'schedule': initial_schedule_value},
+                                              **kwargs)
 
-        return pattern
+    def save(self, commit=True):
+        schedule = self.cleaned_data.get('schedule')
+        TemplatePartyService().set_frequency(self.template, schedule)
 
+        return self.template
 
 class CreateTemplateForm(forms.ModelForm):
     class Meta:

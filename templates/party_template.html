@@ -34,9 +34,9 @@
                 <form class="form-inline" action="{% url 'template-set-frequency' template.id %}" method="post">
                     {% csrf_token %}
 
-                    {% include 'snippets/bs_form.html' with form=set_frequency_form %}
+                    {% include 'snippets/bs_form.html' with form=set_schedule_form %}
 
-                    <button type="submit" class="btn btn-success">Set frequency</button>
+                    <button type="submit" class="btn btn-success">Set schedule</button>
                 </form>
             </div>
 

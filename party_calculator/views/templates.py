@@ -6,7 +6,7 @@ from django.views.generic.base import View, TemplateView
 
 from party_calculator.common import get_form_errors_as_str
 from party_calculator.exceptions import MemberAlreadyInPartyException, TemplatePartyScheduleIsNotSetException
-from party_calculator.forms import CreateTemplateForm, AddMemberToTemplateForm, SetFrequencyForm, \
+from party_calculator.forms import CreateTemplateForm, AddMemberToTemplateForm, SetScheduleForm, \
     AddCustomFoodToTemplateForm
 from party_calculator.models import Food, TemplateParty
 from party_calculator.services.food import FoodService
@@ -84,7 +84,7 @@ class TemplatePartyView(TemplateView):
         context['food'] = Food.objects.all()
 
         context[AddMemberToTemplateForm.form_name] = AddMemberToTemplateForm(party=template_party)
-        context[SetFrequencyForm.form_name] = SetFrequencyForm(template=template_party)
+        context[SetScheduleForm.form_name] = SetScheduleForm(template=template_party)
         context[AddCustomFoodToTemplateForm.form_name] = AddCustomFoodToTemplateForm(party=template_party)
 
         return context
@@ -220,13 +220,12 @@ class TemplateSetFrequency(View):
     def post(self, request, template_id: int, **kwargs):
         template = TemplatePartyService().get(id=template_id)
 
-        form = SetFrequencyForm(request.POST, template=template)
+        form = SetScheduleForm(request.POST, template=template)
         if not form.is_valid():
             errors = get_form_errors_as_str(form)
             messages.error(request, errors)
         else:
-            pattern = form.cleaned_data.get('pattern')
-            TemplatePartyService().set_frequency(template, pattern)
+            form.save()
             messages.success(request, 'Template schedule is set')
 
         return redirect(reverse(TemplatePartyView.name, kwargs={'template_id': template.id}))

@@ -3,7 +3,7 @@ from django.db import transaction
 from party_calculator.common.service import Service
 from party_calculator.exceptions import MemberAlreadyInPartyException, \
     NoSuchTemplatePartyStateException
-from party_calculator.models import TemplateParty, Membership, OrderedFood, Food, Party
+from party_calculator.models import TemplateParty, Membership, OrderedFood, Food, Party, Schedule
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
 from party_calculator.services.schedule import ScheduleService
@@ -123,14 +123,20 @@ class TemplatePartyService(Service):
         template.state = state
         template.save()
 
-    def set_frequency(self, template: model, pattern: str):
-        if not template.schedule:
-            schedule = self.schedule_service.create(pattern=pattern)
-            template.schedule = schedule
-            template.save()
-        else:
-            schedule = template.schedule
-            self.schedule_service.update(schedule, pattern)
+    def set_frequency(self, template: model, schedule: Schedule):
+        schedule_values = (
+            schedule.minute,
+            schedule.hour,
+            schedule.day_of_week,
+            schedule.day_of_month,
+            schedule.month_of_year
+        )
+        kwargs = dict(zip(self.schedule_service.CRONTAB_FIELDS, schedule_values))
+
+        crontab_schedule, _ = self.schedule_service.get_or_create_dcbcs(**kwargs)
+
+        template.schedule = schedule
+        template.save()
 
     def get_template_name(self, party: Party):
         return '{0} {1}'.format(self.TEMPLATE_PREFIX, party.name)
