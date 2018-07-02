@@ -1,23 +1,26 @@
 import decimal
 import time
-from datetime import datetime
 
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.db import transaction
 
 from PartyCalculator.settings import WEBSITE_URL, HOST
-from party_calculator_auth.models import Profile
 from party_calculator.common.service import Service
-from party_calculator.exceptions import MemberAlreadyInParty, NoSuchPartyState
+from party_calculator.exceptions import MemberAlreadyInPartyException, NoSuchPartyStateException
 from party_calculator.models import Party, Food, Membership, OrderedFood, TemplateParty
 from party_calculator.services.member import MemberService
 from party_calculator.services.order import OrderService
 from party_calculator.services.profile import ProfileService
+from party_calculator_auth.models import Profile
 
 
 class PartyService(Service):
     model = Party
+
+    def __init__(self):
+        self.member_service = MemberService()
+        self.order_service = OrderService()
+        self.profile_service = ProfileService()
 
     def create(self, name, creator, members=None) -> model:
         if not members:
@@ -25,10 +28,9 @@ class PartyService(Service):
 
         party = super(PartyService, self).create(name=name, created_by=creator)
 
-        ms = MemberService()
-        ms.create(profile=creator, party=party, is_owner=True)
+        self.member_service.create(profile=creator, party=party, is_owner=True)
         for member in members:
-            ms.create(profile=member, party=party)
+            self.member_service.create(profile=member, party=party)
 
         return party
 
@@ -41,18 +43,23 @@ class PartyService(Service):
             time.strftime("%d.%m.%Y:%H:%M")
         )
 
-        party = super(PartyService, self).create(name=party_name, created_by=template.created_by, template=template)
+        party = super(PartyService, self).create(name=party_name,
+                                                 created_by=template.created_by,
+                                                 template=template)
 
         party_food = {}
-        os = OrderService()
         for order_item in template.template_ordered_food.all():
-            item = os.create(party=party, name=order_item.name, price=order_item.price, quantity=order_item.quantity)
+            item = self.order_service.create(party=party,
+                                             name=order_item.name,
+                                             price=order_item.price,
+                                             quantity=order_item.quantity)
             party_food[item.name] = item
 
-        ms = MemberService()
         for template_member in template.template_memberships.all():
             is_owner = True if template_member.profile == party.created_by else False
-            member = ms.create(profile=template_member.profile, party=party, is_owner=is_owner)
+            member = self.member_service.create(profile=template_member.profile,
+                                                party=party,
+                                                is_owner=is_owner)
 
             for template_excluded_food in template_member.excluded_food.all():
                 food = party_food[template_excluded_food.name]
@@ -64,7 +71,7 @@ class PartyService(Service):
         self.check_is_party_active(party)
 
         if state not in [x for (x, y) in self.model.states]:
-            raise NoSuchPartyState()
+            raise NoSuchPartyStateException()
 
         party.state = state
         party.save()
@@ -91,22 +98,25 @@ class PartyService(Service):
     def add_member_to_party(self, party: model, profile: Profile):
         self.check_is_party_active(party)
 
-        MemberService().grant_membership(party, profile)
+        self.member_service.grant_membership(party, profile)
 
     def remove_member_from_party(self, member: Membership):
         self.check_is_party_active(member.party)
 
-        MemberService().revoke_membership(member)
+        self.member_service.revoke_membership(member)
 
     def order_food(self, party: model, food: Food, quantity: int):
         self.check_is_party_active(party)
 
-        OrderService().create_or_update_order_item(party, food, quantity)
+        self.order_service.create_or_update_order_item(party,
+                                                       food.name,
+                                                       food.price,
+                                                       quantity)
 
     def remove_from_order(self, order_item: OrderedFood):
         self.check_is_party_active(order_item.party)
 
-        OrderService().delete(order_item)
+        self.order_service.delete(order_item)
 
     def sponsor_party(self, member: Membership, amount: float):
         self.check_is_party_active(member.party)
@@ -117,23 +127,24 @@ class PartyService(Service):
     def invite_member(self, party: model, info: str):
         self.check_is_party_active(party)
 
-        profile = ProfileService().get(username=info)
+        profile = self.profile_service.get(username=info)
 
         if not profile:
             raise Profile.DoesNotExist()
 
-        if MemberService().is_party_member(profile, party):
-            raise MemberAlreadyInParty(
+        if self.member_service.is_party_member(profile, party):
+            raise MemberAlreadyInPartyException(
                 "User {0} (id={1}) is already in {2} (id={3})"
                 .format(profile.username, profile.id, party.name, party.id)
             )
 
         join_url = '/party/invite/someID'
-        send_mail("Party calculator: You are invited to {0}".format(party.name),
-                  "Proceed this link to join the Party and start becoming drunk\n"
-                  "{0}{1}".format(WEBSITE_URL, join_url),
-                  "admin@{0}".format(HOST),
-                  [profile.email])
+        from party_calculator.tasks import send_mail
+        send_mail.delay("Party calculator: You are invited to {0}".format(party.name),
+                        "Proceed this link to join the Party and start becoming drunk\n"
+                        "{0}{1}".format(WEBSITE_URL, join_url),
+                        "admin@{0}".format(HOST),
+                        [profile.email])
 
         # We will add member without confirmation for now but check console for a message
         self.add_member_to_party(party, profile)

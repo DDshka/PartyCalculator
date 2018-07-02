@@ -3,10 +3,10 @@ import urllib
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.urls import reverse
 
 from PartyCalculator.settings import CAPTCHA_ENABLED
+from party_calculator.tasks import send_mail
 from party_calculator_auth.models import Profile, Code
 
 
@@ -15,28 +15,34 @@ class LoginForm(forms.ModelForm):
         model = Profile
         fields = ('username', 'password',)
 
-    request = None
+    form_name = 'login_form'
 
     def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+
         if request:
-            self.request = request
             super(LoginForm, self).__init__(data=request.POST, *args, **kwargs)
         else:
             super(LoginForm, self).__init__(*args, **kwargs)
+
+        self.fields['username'].help_text = None
+        self.fields['password'].widget = forms.PasswordInput()
 
     def clean(self):
         super(LoginForm, self)
 
         check_captcha(self.request)
 
-        from .methods import auth_user
+        from party_calculator_auth.services.auth import auth_user
         username = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
+        # TODO: raise exceptions (NoSuchUser, ProfileInactive) in auth_user and handle here
         logged = auth_user(self.request, username, password)
 
         if not logged:
             raise ValidationError('Wrong authentication. '
-                                  'Provided data may be wrong or such user simply does not exist')
+                                  'Provided data may be wrong or such user simply does not exist,'
+                                  'or this profile has not been activated')
 
 
 class SignInForm(forms.ModelForm):
@@ -44,14 +50,18 @@ class SignInForm(forms.ModelForm):
         model = Profile
         fields = ('username', 'password', 'email',)
 
-    request = None
+    form_name = 'signin_form'
 
     def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+
         if request:
-            self.request = request
             super(SignInForm, self).__init__(data=request.POST, *args, **kwargs)
         else:
             super(SignInForm, self).__init__(*args, **kwargs)
+
+        self.fields['username'].help_text = None
+        self.fields['password'].widget = forms.PasswordInput()
 
     def clean(self):
         super(SignInForm, self)
@@ -76,14 +86,15 @@ class SignInForm(forms.ModelForm):
 
         user.verification = Code.objects.create()
 
-        from PartyCalculator.settings import HOST, WEBSITE_URL
-        verification_url = reverse('verification',
+        from PartyCalculator.production_settings import HOST, WEBSITE_URL
+        from party_calculator_auth.views import VerificationView
+        verification_url = reverse(VerificationView.name,
                                    kwargs={'verification_code': user.verification.code})
-        send_mail("Party calculator: Activation code",
-                  "Proceed this link to make your profile active and start becoming drunk\n"
-                  "{0}{1}".format(WEBSITE_URL, verification_url),
-                  "admin@{0}".format(HOST),
-                  [user.email])
+        send_mail.delay("Party calculator: Activation code",
+                        "Proceed this link to make your profile active and start becoming drunk\n"
+                        "{0}{1}".format(WEBSITE_URL, verification_url),
+                        "admin@{0}".format(HOST),
+                        [user.email])
 
         user.save()
 

@@ -28,6 +28,7 @@ class AbstractParty(models.Model):
 class AbstractMembership(models.Model):
     class Meta:
         abstract = True
+        ordering = ['-is_owner']
 
     profile = models.ForeignKey(Profile, on_delete=models.DO_NOTHING)
     is_owner = models.BooleanField(null=False, default=False)
@@ -79,6 +80,18 @@ class Party(AbstractParty):
     end_time = models.DateTimeField(null=True)
 
 
+class Schedule(models.Model):
+    name = models.CharField(max_length=1024, null=False, blank=False)
+    minute = models.CharField(max_length=60 * 4, default='*')
+    hour = models.CharField(max_length=24 * 4, default='*')
+    day_of_week = models.CharField(max_length=64, default='*')
+    day_of_month = models.CharField(max_length=31 * 4, default='*')
+    month_of_year = models.CharField(max_length=64, default='*')
+
+    def __str__(self):
+        return self.name
+
+
 class TemplateOrderedFood(AbstractOrderedFood):
     party = models.ForeignKey("TemplateParty", null=True, on_delete=models.SET_NULL, related_name='template_ordered_food')
 
@@ -94,7 +107,7 @@ class TemplateMembership(AbstractMembership):
 class TemplateParty(AbstractParty):
     members = models.ManyToManyField(Profile, through=TemplateMembership, related_name='template_member_of')
     ordered_food = models.ManyToManyField(TemplateOrderedFood, related_name='template_order_of')
-    schedule = models.ForeignKey(CrontabSchedule, null=True, on_delete=models.SET_NULL)
+    schedule = models.ForeignKey(Schedule, null=True, on_delete=models.SET_NULL)
     state = models.CharField(max_length=512, choices=AbstractParty.states, default=AbstractParty.INACTIVE)
 
 

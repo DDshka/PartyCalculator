@@ -1,10 +1,10 @@
 import uuid
 
-from django.contrib.auth.models import User, AbstractUser
+from django.contrib.auth.models import User
 from django.db import models
 
 
-class Profile(AbstractUser):
+class Profile(User):
     GENDERS = (
         ('male', 'Male'),
         ('female', 'Female')
@@ -19,3 +19,4 @@ class Profile(AbstractUser):
 class Code(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     code = models.UUIDField(default=uuid.uuid4)
+

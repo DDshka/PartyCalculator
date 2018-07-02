@@ -3,16 +3,16 @@ from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render, redirect, render_to_response
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView
 from social_django.models import UserSocialAuth
 
-from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY
-from party_calculator_auth.forms import LoginForm, SignInForm
-from party_calculator_auth.models import Profile
+from PartyCalculator.settings import GOOGLE_RECAPTCHA_SITE_KEY, CAPTCHA_ENABLED
 from party_calculator.services.profile import ProfileService
+from party_calculator_auth.forms import LoginForm, SignInForm
+from party_calculator_auth.models import Profile, Code
 
 
 class LoginView(View):
@@ -31,7 +31,10 @@ class LoginView(View):
 
         form = LoginForm(request)
         if not form.is_valid():
-            return render_to_response(self.template_name, self.get_context_data(form=form))
+            kwargs = {
+                LoginForm.form_name: form
+            }
+            return render(request, self.template_name, self.get_context_data(**kwargs))
 
         if request.GET.get('next'):
             return HttpResponseRedirect(request.GET.get('next'))
@@ -40,16 +43,20 @@ class LoginView(View):
 
     def get_context_data(self, **kwargs):
         context = {}
+
         try:
-            context['form'] = kwargs['form']
+            context[LoginForm.form_name] = kwargs[LoginForm.form_name]
         except KeyError:
-            context['form'] = LoginForm()
+            context[LoginForm.form_name] = LoginForm()
+
+        context['captcha_enabled'] = CAPTCHA_ENABLED
         context['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
+
         return context
 
 
-class SignInView(CreateView):
-    name = 'sign-in'
+class SignUpView(CreateView):
+    name = 'sign-up'
     template_name = 'register.html'
     model = Profile
     form_class = SignInForm
@@ -59,7 +66,7 @@ class SignInView(CreateView):
         if request.user.is_authenticated:
             return redirect(reverse_lazy('home'))
 
-        return super(SignInView, self).get(request, *args, **kwargs)
+        return super(SignUpView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -67,19 +74,25 @@ class SignInView(CreateView):
 
         form = SignInForm(request)
         if not form.is_valid():
-            return render_to_response(self.template_name, self.get_context_data(form=form))
+            kwargs = {
+                SignInForm.form_name: form
+            }
+            return render(request, self.template_name, self.get_context_data(**kwargs))
 
         form.save()
         return redirect(reverse_lazy('home'))
 
     def get_context_data(self, **kwargs):
         context = {}
-        # context = super(SignInView, self).get_context_data(**kwargs)
+
         try:
-            context['form'] = kwargs['form']
+            context[SignInForm.form_name] = kwargs[SignInForm.form_name]
         except KeyError:
-            context['form'] = SignInForm()
+            context[SignInForm.form_name] = SignInForm()
+
+        context['captcha_enabled'] = CAPTCHA_ENABLED
         context['google_recaptcha_site_key'] = GOOGLE_RECAPTCHA_SITE_KEY
+
         return context
 
 
@@ -87,6 +100,7 @@ class LogoutView(View):
     name = 'logout'
 
     def get(self, request):
+        messages.success(request, 'You successfully logged out')
         logout(request)
 
         return redirect(reverse_lazy('home'))
@@ -96,12 +110,17 @@ class VerificationView(View):
     name = 'verification'
 
     def get(self, request, verification_code):
-        verified = ProfileService().activate_profile(verification_code)
+        message = "Your profile has been successfully activated."
 
-        if not verified:
-            return HttpResponse("It seems your profile has been already activated")
+        from django.core.exceptions import ValidationError
+        try:
+            verified = ProfileService().activate_profile(verification_code)
+            if not verified:
+                message = "It seems your profile has been already activated"
+        except (Code.DoesNotExist, ValidationError):
+            message = 'Such verification code does not exist'
 
-        return HttpResponse("Your profile has been successfully activated.")
+        return HttpResponse(message)
 
 
 # TODO: recode settings and password methods as classbased views

@@ -1,0 +1,6 @@
+@startuml
+TemplateParty -> Frequency : selects
+Frequency -> CrontabSchedule : copies crontab fileds into
+CrontabSchedule -> PeriodicTask : used by
+
+@enduml

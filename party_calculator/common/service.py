@@ -16,7 +16,7 @@ class Service():
     def create(self, **kwargs) -> model:
         return self.model.objects.create(**kwargs)
 
-    def create_nosave(self, **kwargs) -> model:
+    def instance(self, **kwargs) -> model:
         return self.model(**kwargs)
 
     def delete(self, obj: model):

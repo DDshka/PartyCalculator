@@ -1,77 +1,69 @@
 from django.test import TestCase
 
-from party_calculator.models import OrderedFood
-from party_calculator.services.food import FoodService
-from party_calculator.services.member import MemberService
+from party_calculator.models import Membership, Party
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
+from party_calculator_auth.models import Profile
 
 
-class PartyTestCase(TestCase):
-    test_food = {
-        'Beer': 125.50,
-        'Pizza': 290,
-        'BigPizza': 475.50,
-        'Meat': 170
-    }
-
-    test_users = (
-        'Boskin',
-        'Kuzya',
-        'Sashka',
-        'Hakka',
-        'Mason',
-    )
-
-    test_party_name = 'test_party'
+class CreatePartyTestCase(TestCase):
+    party_service = PartyService()
+    profile_service = ProfileService()
 
     def setUp(self):
-        for key in self.test_food:
-            FoodService().create(name=key, price=self.test_food[key])
+        Profile.objects.create(username='test_user_one')
+        Profile.objects.create(username='test_user_two')
 
-        members = []
+    def test_create_party(self):
+        creator = Profile.objects.get(username='test_user_one')
 
-        for name in self.test_users:
-            members.append(ProfileService().create(username=name))
+        party_to_create = self.party_service.create(name='test_party', creator=creator)
 
-        PartyService().create(creator=members[0], name=self.test_party_name)
+        actual_party = Party.objects.get(name='test_party')
 
-    def test_add_members_to_party(self):
-        ps = ProfileService()
-        users = [ps.get(username=user) for user in self.test_users[1:]]
+        self.assertEqual(party_to_create, actual_party)
 
-        party = PartyService().get(name=self.test_party_name)
-        members = []
-        ms = MemberService()
-        for user in users:
-            members.append(ms.create(profile=user, party=party))
 
-        # Check parties names
-        self.assertEqual(
-            party.name,
-            self.test_party_name
-        )
+class AddMemberToPartyTestCase(TestCase):
+    party_service = PartyService()
+    profile_service = ProfileService()
 
-        # check membership
-        self.assertIn(
-            MemberService().get(id=members[0].id),
-            PartyService().get_party_members(party),
-        )
+    def setUp(self):
+        creator = Profile.objects.create(username='test_user_one')
+        Profile.objects.create(username='test_user_two')
 
-        # check owner
-        self.assertEqual(
-            PartyService().get(name=self.test_party_name).created_by,
-            ProfileService().get(username=self.test_users[0])
-        )
+        Party.objects.create(name='test_party', created_by=creator)
 
-    def test_add_food_to_party(self):
-        ps = PartyService()
+    def test_add_member(self):
+        party = self.party_service.get(name='test_party')
+        user_two = self.profile_service.get(username='test_user_two')
 
-        party = ps.get(name=self.test_party_name)
-        for food in FoodService().get(name='Beer'):
-            ordered_food, created = OrderedFood.objects.get_or_create(party=party, food=food.name)
-            ordered_food.price = food.price
-            ordered_food.quantity += 1
-            ordered_food.save()
+        self.party_service.add_member_to_party(party, user_two)
 
-        ps.order_food(party, food, quantity=3)
+        party_membership = party.memberships.get(profile=user_two)
+        actual_membership = Membership.objects.get(party=party, profile=user_two)
+
+        self.assertEqual(party_membership, actual_membership)
+
+
+class RemoveMemberFromPartyTestCase(TestCase):
+    party_service = PartyService()
+    profile_service = ProfileService()
+
+    def setUp(self):
+        creator = Profile.objects.create(username='test_user_one')
+        member = Profile.objects.create(username='test_user_two')
+
+        party = Party.objects.create(name='test_party', created_by=creator)
+        Membership.objects.create(party=party, profile=member)
+
+    def test_remove_member(self):
+        party = self.party_service.get(name='test_party')
+        user_two = Profile.objects.get(username='test_user_two')
+        membership = Membership.objects.get(party=party, profile=user_two)
+
+        self.party_service.remove_member_from_party(membership)
+
+        is_in_party = party.memberships.filter(profile=user_two).exists()
+
+        self.assertFalse(is_in_party)

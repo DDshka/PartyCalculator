@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from django.contrib import messages
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -36,7 +37,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'partycalculator.herokuapp.com',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    '93.79.132.163'
 ]
 
 # Application definition
@@ -50,16 +52,19 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'django_celery_beat',
+    'rest_framework',
     'social_django',
-
+    'widget_tweaks',
+    
     'party_calculator',
     'party_calculator_auth',
 ]
 
-# celery -A proj beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -67,7 +72,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
@@ -101,28 +105,21 @@ TEMPLATES = [
     },
 ]
 
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger'
+}
+
 WSGI_APPLICATION = 'PartyCalculator.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
 DATABASES = {
-    # 'default': dj_database_url.config(
-    #   default=config('DATABASE_URL')
-    # )
-    # 'default': {
-    #   'ENGINE': 'django.db.backends.postgresql',
-    #   'HOST': 'localhost',
-    #   'NAME': 'PartyCalculator',
-    #   'PORT': 5432,
-    #   'USER': 'postgres',
-    #   'PASSWORD': 'admin',
-    #   'DATABASE': 'PartyCalculator'
-    # }
+
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRES_NAME', 'postgres'),
         'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'admin'),
         'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
         'PORT': os.environ.get('POSTGRES_PORT', '5400'),
     }
@@ -164,14 +161,14 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
-STATIC_ROOT = os.path.join('static')
 STATIC_URL = '/static/'
 
-# Extra places for collectstatic to find static files.
-# STATICFILES_DIRS = (
-#     os.path.join('static'),
-# )
-STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+
+# STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 # REDIS related settings
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
@@ -181,10 +178,10 @@ BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
 CELERY_BROKER_URL = BROKER_URL
 CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
 
+
 # EMAIL SETTINGS
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-AUTH_USER_MODEL = "party_calculator_auth.Profile"
 
 # Django social OAuth app
 SOCIAL_AUTH_USER_MODEL = "party_calculator_auth.Profile"
@@ -193,11 +190,15 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = '/settings/'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
 SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 
-SOCIAL_AUTH_GITHUB_KEY = os.environ.get('SOCIAL_AUTH_GITHUB_KEY', None)
-SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('SOCIAL_AUTH_GITHUB_SECRET', None)
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('SOCIAL_AUTH_GITHUB_KEY',
+                                        'bcd6dd27e373c31f03cb')
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('SOCIAL_AUTH_GITHUB_SECRET',
+                                           'd8c539684ca92c137b6991cafb7e2071cd19782a')
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', None)
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', None)
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY',
+                                               '423512986764-sd7idds82np892v0mhqupip6hce3thpr.apps.googleusercontent.com')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET',
+                                                  '287TH_jTsK4W9tBZt8LFerKi')
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
@@ -205,6 +206,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_user',
     # 'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
+    # 'party_calculator_auth.pipelines.create_user',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
@@ -212,7 +214,9 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 # Google reCAPTCHA
-CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", 1) == 1
-GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY', None)
-GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY', None)
+CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", "0") == "1"
+GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY',
+                                           '6LdCel8UAAAAAHUTjJsHpG2NQCeVMXJQEHeFPg_2')
+GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY',
+                                             '6LdCel8UAAAAALG2nZXwjtObYTMX8tVPlqYNXdAO')
 

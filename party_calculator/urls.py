@@ -1,12 +1,22 @@
 from django.conf.urls import url
 
-from party_calculator.views import HomeView, PartyView, PartyCreateView, \
-    PartyCreateFromExisting, PartyAddFood, PartyInvite, \
-    PartyRemoveFood, PartyKickMember, PartyExcludeFood, \
-    PartyIncludeFood, PartySponsor, PartyMakeInactive, TemplatesListView, TemplatePartyView, TemplateCreate, \
-    TemplateAddMemberView, TemplateKickMember, TemplateAddFood, TemplateSetInactive, TemplateSetActive, \
-    TemplateGrantOwnership, TemplateRevokeOwnership, TemplateRemoveFood, TemplateSetFrequency, OmegaLul, \
-    TemplateCreateFromParty, PartyDelete, TemplateDelete
+from party_calculator.views import HomeView
+from party_calculator.views.parties import PartyCreateView, PartyCreateFromExisting, \
+    PartyDelete, PartyMakeInactive, \
+    PartyRevokeOwnership, PartyGrantOwnership, \
+    PartySponsor, PartyIncludeFood, \
+    PartyExcludeFood, PartyKickMember, \
+    PartyRemoveFood, PartyInvite, \
+    PartyAddCustomFood, PartyAddFood, \
+    PartyView
+from party_calculator.views.templates import TemplateDelete, TemplateSetFrequency, \
+    TemplateRevokeOwnership, \
+    TemplateGrantOwnership, TemplateSetActive, \
+    TemplateSetInactive, TemplateRemoveFood, \
+    TemplateAddCustomFood, TemplateAddFood, \
+    TemplateKickMember, TemplateAddMemberView, \
+    TemplatePartyView, TemplateCreateFromParty, \
+    TemplateCreate, TemplatesListView
 
 urlpatterns = [
     url(r'^$', HomeView.as_view(),
@@ -23,6 +33,9 @@ urlpatterns = [
 
     url(r'^party/(?P<party_id>\d+)/add/food', PartyAddFood.as_view(),
         name=PartyAddFood.name),
+
+    url(r'^party/(?P<party_id>\d+)/add/custom-food', PartyAddCustomFood.as_view(),
+        name=PartyAddCustomFood.name),
 
     url(r'^party/(?P<party_id>\d+)/add/member', PartyInvite.as_view(),
         name=PartyInvite.name),
@@ -41,6 +54,12 @@ urlpatterns = [
 
     url(r'^party/(?P<party_id>\d+)/sponsor', PartySponsor.as_view(),
         name=PartySponsor.name),
+
+    url(r'^party/(?P<party_id>\d+)/add/owner', PartyGrantOwnership.as_view(),
+        name=PartyGrantOwnership.name),
+
+    url(r'^party/(?P<party_id>\d+)/remove/owner', PartyRevokeOwnership.as_view(),
+        name=PartyRevokeOwnership.name),
 
     url(r'^party/(?P<party_id>\d+)/inactive', PartyMakeInactive.as_view(),
         name=PartyMakeInactive.name),
@@ -71,6 +90,9 @@ urlpatterns = [
     url(r'^templates/(?P<template_id>\d+)/add/food', TemplateAddFood.as_view(),
         name=TemplateAddFood.name),
 
+    url(r'^templates/(?P<template_id>\d+)/add/custom-food', TemplateAddCustomFood.as_view(),
+        name=TemplateAddCustomFood.name),
+
     url(r'^templates/(?P<template_id>\d+)/remove/food', TemplateRemoveFood.as_view(),
         name=TemplateRemoveFood.name),
 
@@ -88,9 +110,6 @@ urlpatterns = [
 
     url(r'^templates/(?P<template_id>\d+)/frequency', TemplateSetFrequency.as_view(),
         name=TemplateSetFrequency.name),
-
-    url(r'^create/party-from-template$', OmegaLul.as_view(),
-        name=OmegaLul.name),
 
     url(r'^templates/(?P<template_id>\d+)/delete', TemplateDelete.as_view(),
         name=TemplateDelete.name),

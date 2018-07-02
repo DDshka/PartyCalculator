@@ -1,22 +1,30 @@
 {% extends 'base.html' %}
 
+{% block meta %}
+    {{ block.super }}
+{% endblock meta %}
+
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <form action="{% url 'create-template' %}" method="POST">
+                <form class="form-horizontal" action="{% url 'template-create' %}" method="post">
                     {% csrf_token %}
-                    {{ create_template_form }}
-                    <button class="btn btn-success">Create</button>
+
+                    {% include 'snippets/bs_form.html' with form=create_template_form %}
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Create template</button>
+                    </div>
                 </form>
                 {% if templates %}
                     <table class="table">
-                        <caption><h1>Your templated</h1></caption>
+                        <caption><h1>Your templates</h1></caption>
                         {% for template in templates %}
                             <tr>
                                 <td><a href="{% url 'template' template.id %}">{{ template.name }}</a></td>
                                  <td>
-                                    <form action="{% url 'delete-template' template.id %}">
+                                    <form action="{% url 'template-delete' template.id %}">
                                         <button type="submit" class="btn btn-danger">Delete template</button>
                                     </form>
                                 </td>

@@ -3,21 +3,29 @@ class PartyCalculatorException(Exception):
     pass
 
 
-class MemberAlreadyInParty(PartyCalculatorException):
+class MemberAlreadyInPartyException(PartyCalculatorException):
     pass
 
 
-class NoSuchPartyState(PartyCalculatorException):
+class NoSuchPartyStateException(PartyCalculatorException):
     pass
 
 
-class TemplatePartyScheduleIsNotSet(PartyCalculatorException):
+class TemplatePartyScheduleIsNotSetException(PartyCalculatorException):
     pass
 
 
-class NoSuchTemplatePartyState(PartyCalculatorException):
+class NoSuchTemplatePartyStateException(PartyCalculatorException):
     pass
 
 
-class TemplatePartyHasActiveRelatedParty(PartyCalculatorException):
+class TemplatePartyHasActiveRelatedPartyException(PartyCalculatorException):
+    pass
+
+
+class NegativeValueException(PartyCalculatorException):
+    pass
+
+
+class OAuthException(PartyCalculatorException):
     pass

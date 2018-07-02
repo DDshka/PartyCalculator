@@ -1,16 +1,28 @@
 {% extends 'base.html' %}
 
+{% block meta %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.formset/1.2.2/jquery.formset.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+{% endblock meta %}
+
 {% block title %} Home {% endblock title %}
+
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock errors %}
 
 {% block content %}
     <div class="container">
         {% if request.user.is_authenticated %}
         <div>
-            <h1>WELCOME TO THE RICE FIELD, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></h1>
+            <h1>Welcome, {{ request.user.username }} | <a href="{% url 'logout' %}">Logout</a></h1>
         </div>
 
         <div class="row">
-            <div class="col-lg-6">
+            <div class="col-lg-4">
                 <h2>Parties you participate: </h2>
                 {% if parties %}
                     <ul>
@@ -19,10 +31,10 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <h3>May you should find someone to speak?</h3>
+                    <h3>May be you should find someone to speak?</h3>
                 {% endif %}
             </div>
-            <div class="col-lg-6">
+            <div class="col-lg-4">
                 <h2>Parties you administrate: </h2>
                 {% if adm_parties %}
                     <ul>
@@ -34,39 +46,62 @@
                     <h3>You administrate no parties</h3>
                 {% endif %}
             </div>
+            <div class="col-lg-4">
+                <h2><a href="{% url 'templates' %}">Your templates</a></h2>
+            </div>
         </div>
 
         <div class="row">
-            <form action="{% url 'create-party' %}" method="post">
-                {% csrf_token %}
-                {{ create_party_form }}
-                <button type="submit">Create new party</button>
-            </form>
+            <div class="col-lg-4">
+                <form class="form-horizontal" action="{% url 'party-create' %}" method="post">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=create_party_form %}
+                    {% include 'snippets/dynamic_fields_form.html' with formset=formset %}
+
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Create party</button>
+                    </div>
+                </form>
+                <script type="text/javascript">
+                    var formset_row = $('.formset_row')
+                    formset_row.formset({
+                        addText: 'add party member',
+                        addCssClass: 'form-group',
+                        deleteText: 'remove',
+                        added: function(e) {
+                            $(e).find('input').autocomplete({
+                                source: "{% url 'profile-list-by-term' %}",
+                                minLength: 2
+                            });
+                        }
+                    });
+                    formset_row.find('input').autocomplete({
+                        source: "{% url 'profile-list-by-term' %}",
+                        minLength: 2
+                    });
+                </script>
+            </div>
         </div>
 
         <div class="row">
-            <form action="{% url 'create-party-from-existing' %}" method="post">
-                {% csrf_token %}
-                {{ create_party_from_existing_form }}
-                <button type="submit">Create new party</button>
-            </form>
-        </div>
+           <div class="col-lg-4">
+                <form class="form-horizontal" action="{% url 'party-create-from-existing' %}" method="post">
+                    {% csrf_token %}
 
-        <div class="row">
-            <h1><a href="{% url 'templates' %}">Templates</a></h1>
-        </div>
+                    {% include 'snippets/bs_form.html' with form=create_party_from_existing_form %}
 
-        <div class="row">
-            <form action="{% url 'create-party-from-template' %}" method="post">
-                {% csrf_token %}
-                <input type="text" name="template">
-                <button type="submit" class="btn">Create from template</button>
-            </form>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Create party from existing one</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         {% else %}
         <div>
-            <h1><a href="{% url 'login' %}">Login</a> | <a href="{% url 'sign-in' %}">Sign in</a></h1>
+            <h1><a href="{% url 'login' %}">Login</a> | <a href="{% url 'sign-up' %}">Sign up</a></h1>
                 <p><strong>-- OR --</strong></p>
                 <a href="{% url 'social:begin' 'github' %}">Login with GitHub</a><br>
                 <a href="{% url 'social:begin' 'google-oauth2' %}">Google+</a>

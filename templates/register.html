@@ -1,13 +1,40 @@
 {% extends 'base.html' %}
 
+{% block meta %}
+    {{ block.super }}
+{% endblock meta %}
+
+{% block title %}
+    {{ block.super }} | Register
+{% endblock title %}
+
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock errors %}
+
 {% block content %}
-    <form action="{% url 'sign-in' %}" method="post">
-        {% csrf_token %}
-        {{ form }}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4"></div>
+            <div class="col-lg-4">
+                <form class="form-horizontal" action="{% url 'sign-up' %}" method="post">
+                    {% csrf_token %}
 
-        <script src='https://www.google.com/recaptcha/api.js'></script>
-        <div class="g-recaptcha" data-sitekey="{{ google_recaptcha_site_key }}"></div>
+                    {% include 'snippets/bs_form.html' with form=signin_form %}
 
-        <button type="submit">Sign in</button>
-    </form>
+                    {% if captcha_enabled %}
+                    <div class="form-group">
+                        <script src='https://www.google.com/recaptcha/api.js'></script>
+                        <div class='g-recaptcha' data-sitekey='{{ google_recaptcha_site_key }}'></div>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-lg-4"></div>
+        </div>
+    </div>
 {% endblock content %}

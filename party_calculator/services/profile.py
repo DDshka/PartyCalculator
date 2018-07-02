@@ -1,5 +1,7 @@
-from party_calculator_auth.models import Profile, Code
+from django.core.exceptions import ValidationError
+
 from party_calculator.common.service import Service
+from party_calculator_auth.models import Profile, Code
 
 
 class ProfileService(Service):
@@ -22,8 +24,8 @@ class ProfileService(Service):
     def activate_profile(self, uuid) -> bool:
         try:
             code: Code = Code.objects.get(code=uuid)
-        except Code.DoesNotExist:
-            return False
+        except (ValidationError, Code.DoesNotExist):
+            raise
 
         profile: Profile = code.profile
 

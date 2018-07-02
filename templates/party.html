@@ -3,44 +3,65 @@
 {% block meta %}
     {{ block.super }}
     {% load templatehelpers %}
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $(function() {
+            $("#id_info").autocomplete({
+                source: "{% url 'profile-list-by-term' %}",
+                minLength: 2,
+                select: function(event, ui) {
+                    console.log(ui)
+                }
+            });
+        });
+    </script>
 {% endblock meta %}
 
 {% block title %}
     {{ party }}
 {% endblock title %}
 
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-lg-4">
                 <h1>{{ party }}{% if not is_active %} | Inactive {% endif %}</h1>
-                {% if is_active %}
-                    <form action="{% url 'party-set-inactive' party.id %}">
+                {% if current_member.is_owner %}
+                    {% if is_active %}
+                    <form action="{% url 'party-set-inactive' party.id %}" method="post">
+                        {% csrf_token %}
                         <button type="submit" class="btn btn-danger">Make inactive (this cannot be undone)</button>
                     </form>
-                {% endif %}
+                    {% endif %}
 
-                {% if not has_template %}
-                <form action="{% url 'create-template-from-party' party.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn">Make a template from this party</button>
-                </form>
+                    {% if not has_template %}
+                    <form action="{% url 'template-create-from-party' party.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn">Make a template from this party</button>
+                    </form>
+                    {% endif %}
+
+                    <form action="{% url 'party-delete' party.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete party</button>
+                    </form>
                 {% endif %}
-                <form action="{% url 'delete-party' party.id %}">
-                    <button type="submit" class="btn btn-danger">Delete party</button>
-                </form>
             </div>
             <div class="col-lg-4">
 
             </div>
             <div class="col-lg-4">
                 {% if is_active %}
-                <form action="{% url 'sponsor-party' party.id %}">
-                    <label for="amount">Amount:</label>
-                    <input type="hidden" name="member" value="{{ current_member.id }}">
-                    <input type="text" id="amount" name="amount" value="0">
+                <form class="form-inline" action="{% url 'party-sponsor' party.id %}" method="post">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=sponsor_party_form %}
+
                     <button type="submit" class="btn btn-success">Sponsor</button>
                 </form>
                 {% endif %}
@@ -48,7 +69,7 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <table class="table">
                     <caption><h2>Members</h2></caption>
                     <thead>
@@ -62,21 +83,44 @@
                         <td>{{ member.total_sponsored }}</td>
                         <td>{{ member.actual_expense }}</td>
                         {% if is_active %}
-                            {% if not member.is_owner %}
-                            <td>
-                                <form action="{% url 'kick-member' party.id %}">
-                                    <input type="hidden" name="member" value="{{ member.id }}">
-                                    <button type="submit" class="btn btn-danger">Kick</button>
-                                </form>
-                            </td>
+                            {% if current_member.is_owner and member.profile != party.created_by %}
+                                {% if current_member.is_owner %}
+                                    <td>
+                                        <form action="{% url 'party-kick-member' party.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="member" value="{{ member.id }}">
+                                            <button type="submit" class="btn btn-danger">Kick</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+
+                                {% if member.is_owner %}
+                                    <td>
+                                        <form action="{% url 'party-revoke-ownership' party.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="member" value="{{ member.id }}">
+                                            <button type="submit" class="btn btn-danger">Revoke ownership</button>
+                                        </form>
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        <form action="{% url 'party-grant-ownership' party.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="member" value="{{ member.id }}">
+                                            <button type="submit" class="btn btn-success">Grant ownership</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
                     </tr>
                     {% endfor %}
                 </table>
                 {% if is_active %}
-                <form action="{% url 'invite-member' party.id %}">
-                    {{ add_to_party_form.as_p }}
+                <form class="form-inline" action="{% url 'party-invite-member' party.id %}" method="post">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=add_member_to_party_form %}
                     <button type="submit" class="btn btn-success">Invite</button>
                 </form>
                 {% endif %}
@@ -100,32 +144,69 @@
                         <td>{{ order_item.total }}</td>
                         {% if is_active %}
                         <td>
-                            {% if order_item.excluded %}
-                            <form action="{% url 'include-food' party.id %}" class="form-inline" style="display: inline">
+                            {% if order_item|is_excluded:current_member %}
+                            <form action="{% url 'include-food' party.id %}" method="post" class="form-inline" style="display: inline">
+                                {% csrf_token %}
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-success">Include</button>
                                 <!--<i class="glyphicon glyphicon-plus-sign"></i>-->
                             </form>
                             {% else %}
-                            <form action="{% url 'exclude-food' party.id %}" style="display: inline">
+                            <form action="{% url 'exclude-food' party.id %}" method="post" style="display: inline">
+                                {% csrf_token %}
                                 <input type="hidden" name="order_item" value="{{ order_item.id }}">
                                 <button type="submit" class="btn btn-danger">Exclude</button>
                                 <!--<i class="glyphicon glyphicon-minus-sign"></i>-->
                             </form>
                             {% endif %}
                         </td>
+                        {% if current_member.is_owner %}
                         <td>
-                            <form action="{% url 'remove-food-from-party' party.id %}">
-                                    <input type="hidden" name="order_item" value="{{ order_item.id }}">
-                                    <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
+                            <form action="{% url 'party-remove-food' party.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="order_item" value="{{ order_item.id }}">
+                                <button type="submit" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i>Remove</button>
                             </form>
                         </td>
+                        {% endif %}
                         {% endif %}
                     </tr>
                     {% endfor %}
                 </table>
                 {% else %}
                     <h1>Party ordered nothing for now</h1>
+                {% endif %}
+                {% if is_active %}
+                <form class="form-horizontal" action="{% url 'party-add-custom-food' party.id %}" method="post">
+                    {% csrf_token %}
+
+                    {% include 'snippets/bs_form.html' with form=add_custom_food_to_party_form %}
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Add custom food</button>
+                    </div>
+                </form>
+                <div class="row">
+                    <div class="col-lg-12">
+                        {% if food %}
+                            <table class="table">
+                                <caption><h1>Available food</h1></caption>
+                                {% for product in food %}
+                                <tr>
+                                    <td>{{ product }}</td>
+                                    <td>{{ product.price }}</td>
+                                    <form action="{% url 'party-add-food' party.id %}" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="food" value="{{ product.id }}">
+                                        <td><input type="number" min="1" value="1" name="quantity"></td>
+                                        <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
+                                    </form>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        {% endif %}
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -136,27 +217,40 @@
                     <table class="table">
                         <caption><h1>Details</h1></caption>
                         <thead>
+                            <th>Member</th>
                             <th>Product</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>People</th>
-                            {% for member in members %}
-                            <th>{{ member.profile }}</th>
-                            {% endfor %}
+                            <th>To pay</th>
                         </thead>
-                        {% for order_item in ordered_food %}
-                            <tr>
-                                <td>{{ order_item.food }}</td>
-                                <td>{{ order_item.price }}</td>
-                                <td>{{ order_item.quantity }}</td>
-                                <td>{{ order_item.ppl_count }}</td>
-                                {% for member in members %}
-                                {% if order_item in member.excluded_food.all %}
+                        {% for member in members %}
+                            {% for order_item in ordered_food %}
+                            <tr {% if member == current_member %} style="background-color:aliceblue" {% endif %}>
+                                <td>{{ member.profile.username }}</td>
+                                <td>{{ order_item.name }}</td>
+                                {% if order_item|is_excluded:member %}
                                 <td>0</td>
                                 {% else %}
                                 <td>{{ order_item.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
                                 {% endif %}
-                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </table>
+                    <table class="table">
+                        <caption><h1>Price for each product</h1></caption>
+                        <thead>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>People</th>
+                            <th>To pay</th>
+                        </thead>
+                        {% for order_item in ordered_food %}
+                            <tr>
+                                <td>{{ order_item.name }}</td>
+                                <td>{{ order_item.price }}</td>
+                                <td>{{ order_item.quantity }}</td>
+                                <td>{{ order_item.ppl_count }}</td>
+                                <td>{{ order_item.price|mul:order_item.quantity|div:order_item.ppl_count|floatformat:2 }}</td>
                             </tr>
                         {% endfor %}
                         <tr>
@@ -166,30 +260,5 @@
                 {% endif %}
             </div>
         </div>
-
-        {% if is_active %}
-        <div class="row">
-            <div class="col-lg-12">
-                {% if food %}
-                    <table class="table">
-                        <caption><h1>Available food</h1></caption>
-                        {% for product in food %}
-                        <tr>
-                            <td>{{ product }}</td>
-                            <td>{{ product.price }}</td>
-                            <form action="{% url 'add-food-to-party' party.id %}">
-                                <input type="hidden" name="food" value="{{ product.id }}">
-                                <td><input type="number" min="1" value="1" name="quantity"></td>
-                                <td><button type="submit" class="btn btn-success"><i class="glyphicon glyphicon-plus-sign"></i></button></td>
-                            </form>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                {% else %}
-                    <h1>YOU ARE IN THE SOVIET UNION</h1>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
     </div>
 {% endblock content %}
