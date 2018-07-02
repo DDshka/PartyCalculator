@@ -1,19 +1,20 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import widgets
+from django.forms import widgets, BaseFormSet, formset_factory
 
-from party_calculator.models import Party, Food, TemplateParty, OrderedFood
+from party_calculator.models import Party, Food, TemplateParty, OrderedFood, Membership
 from party_calculator.services.order import OrderService
 from party_calculator.services.party import PartyService
 from party_calculator.services.profile import ProfileService
 from party_calculator.services.template_order import TemplateOrderService
 from party_calculator.services.template_party import TemplatePartyService
+from party_calculator_auth.models import Profile
 
 
 class CreatePartyForm(forms.ModelForm):
     class Meta:
         model = Party
-        fields = ('name', 'members')
+        fields = ('name',)
 
     form_name = 'create_party_form'
 
@@ -26,9 +27,7 @@ class CreatePartyForm(forms.ModelForm):
             attrs={'placeholder': 'Enter party name here...'}
         )
 
-        self.fields['members'].label = ''
-        self.fields['members'].required = False
-        self.fields['members'].queryset = ProfileService().get_all(excluding={'id': self.user.id})
+        # self.fields['members'].queryset = Profile.objects.exclude(id=user.id)
 
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -45,6 +44,49 @@ class CreatePartyForm(forms.ModelForm):
         party = PartyService().create(name=name, creator=creator, members=members)
 
         return party
+
+
+class MemberForm(forms.ModelForm):
+    class Meta:
+        model = Membership
+        fields = ('profile',)
+
+    profile = forms.CharField(label='Username')
+
+    def clean_profile(self):
+        username = self.cleaned_data.get('profile')
+
+        if not username:
+            return None
+
+        try:
+            return Profile.objects.get(username=username)
+        except Profile.DoesNotExist:
+            raise ValidationError("We cant find such user ({0})".format(username))
+
+
+class BasePartyMemberFormSet(BaseFormSet):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super(BasePartyMemberFormSet, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        if any(self.errors):
+            return
+        profiles = []
+        creator = Profile.objects.get(id=self.user.id)
+        for form in self.forms:
+            profile = form.cleaned_data.get('profile')
+            if profile in profiles:
+                raise ValidationError('There are same users in the set')
+            if creator == profile:
+                raise ValidationError('Do not enter creator as a member! It will be added automatically\n'
+                                      'Current logged in user is treated as a party creator')
+
+            profiles.append(profile)
+
+
+PartyMemberFormSet = formset_factory(MemberForm, formset=BasePartyMemberFormSet, validate_max=True)
 
 
 class CreatePartyFromExistingForm(forms.ModelForm):
@@ -107,37 +149,42 @@ class AddMemberToTemplateForm(AddMemberToPartyForm):
     form_name = 'add_member_to_template_form'
 
 
-class SetFrequencyForm(forms.Form):
-    form_name = 'set_frequency_form'
+class SetScheduleForm(forms.ModelForm):
+    class Meta:
+        model = TemplateParty
+        fields = ('schedule',)
 
-    pattern = forms.CharField()
+    form_name = 'set_schedule_form'
 
     def __init__(self, *args, template=None, **kwargs):
-        super(SetFrequencyForm, self).__init__(*args, **kwargs)
-
         self.template = template
 
-        self.fields['pattern'].widget = forms.TextInput(
-            attrs={'placeholder': 'Enter crontab pattern here...'}
-        )
+        initial_schedule_value = None
+        if template.schedule:
+            initial_schedule_value = template.schedule.pk
 
-    def clean_pattern(self):
-        pattern = self.cleaned_data.get('pattern')
-        splitted = pattern.split(sep=' ')
-        # TODO: secure crontab
-        if len(splitted) < 5:
-            raise ValidationError("Crontab pattern must be made of 5 statements (e.g. * * * * *)")
+        super(SetScheduleForm, self).__init__(*args,
+                                              initial={'schedule': initial_schedule_value},
+                                              **kwargs)
 
-        return pattern
+    def save(self, commit=True):
+        schedule = self.cleaned_data.get('schedule')
+        TemplatePartyService().set_frequency(self.template, schedule)
 
+        return self.template
 
-class CreateTemplateForm(CreatePartyForm):
+class CreateTemplateForm(forms.ModelForm):
+    class Meta:
+        model = TemplateParty
+        fields = ('name', 'members', 'food')
+
     form_name = 'create_template_form'
 
     food = forms.ModelMultipleChoiceField(queryset=Food.objects.all())
 
     def __init__(self, *args, user=None, **kwargs):
-        super(CreateTemplateForm, self).__init__(*args, user=user, **kwargs)
+        self.user = user
+        super(CreateTemplateForm, self).__init__(*args, **kwargs)
 
         self.fields['food'].required = False
         self.fields['members'].required = False

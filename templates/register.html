@@ -4,6 +4,14 @@
     {{ block.super }}
 {% endblock meta %}
 
+{% block title %}
+    {{ block.super }} | Register
+{% endblock title %}
+
+{% block errors %}
+    {% include 'snippets/system_messages.html' with messages=messages %}
+{% endblock errors %}
+
 {% block content %}
     <div class="container">
         <div class="row">

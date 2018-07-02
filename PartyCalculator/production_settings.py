@@ -145,16 +145,15 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
 ]
 
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
 
 # Misc
-PROTOCOL = 'http://'
-HOST = 'localhost'
-PORT = '8000'
+PROTOCOL = 'https://'
+HOST = 'partycalculator.herokuapp.com'
+PORT = None
 WEBSITE_URL = PROTOCOL + HOST
 
 LOGIN_URL = 'login'
@@ -163,16 +162,18 @@ LOGIN_REDIRECT_URL = 'home'
 
 
 # REDIS related settings
-REDIS_HOST = os.environ.get('REDIS_HOST', HOST)
-REDIS_PORT = os.environ.get('REDIS_PORT', '6300')
-BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+BROKER_URL = config('REDIS_URL')
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
 CELERY_BROKER_URL = BROKER_URL
-CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_RESULT_BACKEND = config('REDIS_URL')
 
 
 # EMAIL SETTINGS
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', default='')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = True
 
 
 # Django social OAuth app
@@ -191,6 +192,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY',
                                                '423512986764-sd7idds82np892v0mhqupip6hce3thpr.apps.googleusercontent.com')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET',
                                                   '287TH_jTsK4W9tBZt8LFerKi')
+SOCIAL_AUTH_GOOGLE_OAUTH2_USE_DEPRECATED_API = True
+SOCIAL_AUTH_GOOGLE_PLUS_USE_DEPRECATED_API = True
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
@@ -205,7 +208,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 # Google reCAPTCHA
-CAPTCHA_ENABLED = os.environ.get("CAPTCHA_ENABLED", "0") == "1"
+CAPTCHA_ENABLED = config('CAPTCHA_ENABLED', default=False, cast=bool)
 GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY',
                                            '6LdCel8UAAAAAHUTjJsHpG2NQCeVMXJQEHeFPg_2')
 GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY',

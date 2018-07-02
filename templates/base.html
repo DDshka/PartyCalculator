@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    {% block meta %} {% endblock meta %}
-    <title>Party calculator | {% block title %} {% endblock title %}</title>
     {% include 'snippets/links.html' %}
+    {% block meta %} {% endblock meta %}
+    <title>{% block title %} Party Calculator {% endblock title %}</title>
 </head>
 <body>
     <div class="jumbotron">
         <h1><a href="{% url 'home' %}">Party Calculator</a></h1>
-        <p>???</p>
     </div>
+    {% block errors %} {% endblock %}
     {% block content %} {% endblock content %}
 </body>
 </html>
