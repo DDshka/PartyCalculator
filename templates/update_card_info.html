@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+    {{ block.super }}
+    {% load templatehelpers %}
+{% endblock meta %}
+
+{% block title %}
+    Update card info page
+{% endblock title %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <form method="POST" action="{% url 'card-update' recurring_detail_reference %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="recurring_detail_reference" value="{{ recurring_detail_refrence }}"/>
+                    Expiry month: <input autocomplete="off" type="text" size="2" name="expiryMonth"/>
+                    Expiry year: <input autocomplete="off" type="text" size="4" name="expiryYear"/>
+                    <input type="submit" value="Update card"/>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

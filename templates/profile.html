@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block meta %}
+    {{ block.super }}
+    {% load templatehelpers %}
+{% endblock meta %}
+
+{% block title %}
+    {{ profile }}
+{% endblock title %}
+
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <script type="text/javascript" src="https://test.adyen.com/hpp/cse/js/8215306087953929.shtml"></script>
+                <form method="POST" action="{% url 'card-add' %}" id="adyen-encrypted-form">
+                    {% csrf_token %}
+                    Card Number: <input type="text" size="20" data-encrypted-name="number"/>
+                    Holder name: <input type="text" size="20" data-encrypted-name="holderName"/>
+                    Expiry month: <input type="text" size="2" data-encrypted-name="expiryMonth"/>
+                    Expiry year: <input type="text" size="4" data-encrypted-name="expiryYear"/>
+                    CVC: <input type="text" size="4" data-encrypted-name="cvc"/>
+                    <input type="hidden" value="{% timestamp %}" data-encrypted-name="generationtime"/>
+                    <input type="submit" value="Add card"/>
+                </form>
+                <script>
+                // The form element to encrypt.
+                var form = document.getElementById('adyen-encrypted-form');
+                // See https://github.com/Adyen/CSE-JS/blob/master/Options.md for details on the options to use.
+                var options = {};
+                // Bind encryption options to the form.
+                adyen.createEncryptedForm(form, options);
+                </script>
+            </div>
+
+            <div class="col-lg-6">
+                <table class="table">
+                    <caption><h1>Your cards</h1></caption>
+                    <thead>
+                        <th>Ends with</th>
+                        <th>Exp date</th>
+                    </thead>
+                    {% for card in cards %}
+                        <tr>
+                            <td><strong>{{ card.number }}</strong></td>
+                            <td><strong>{{ card.exp_month }}/{{ card.exp_year }}</strong></td>
+                            <td><a href="{% url 'card-update' card.recurring_detail_reference %}">Update</a></td>
+                            <td><a href="{% url 'card-delete' card.recurring_detail_reference %}">Remove</a></td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

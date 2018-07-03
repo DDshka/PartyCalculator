@@ -220,3 +220,15 @@ GOOGLE_RECAPTCHA_SITE_KEY = os.environ.get('GOOGLE_RECAPTCHA_SITE_KEY',
 GOOGLE_RECAPTCHA_SECRET_KEY = os.environ.get('GOOGLE_RECAPTCHA_SECRET_KEY',
                                              '6LdCel8UAAAAALG2nZXwjtObYTMX8tVPlqYNXdAO')
 
+
+#Adyen
+ADYEN_USER = 'ws@Company.Logicify655'
+ADYEN_PASSWORD = 'j!2Amez~EN=#q7()2@w2WR!(]'
+
+ADYEN_CURRENCY = 'EUR'
+ADYEN_REFERENCE = 'test0'
+ADYEN_MERCHANT_ACCOUNT = 'LogicifyCOM836'
+
+ADYEN_AUTORIZE_CARD_ENDPOINT = 'https://pal-test.adyen.com/pal/servlet/Payment/v30/authorise'
+ADYEN_LIST_RECCURRING_DETAILS_ENDPOINT = 'https://pal-test.adyen.com/pal/servlet/Recurring/v25/listRecurringDetails'
+ADYEN_DISABLE_CARD_ENDPOINT = 'https://pal-test.adyen.com/pal/servlet/Recurring/v25/disable'

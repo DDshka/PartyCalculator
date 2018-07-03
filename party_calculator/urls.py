@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from party_calculator.views import HomeView
+from party_calculator.views import HomeView, ProfileView, CardAdd, CardUpdate, CardDelete
 from party_calculator.views.parties import PartyCreateView, PartyCreateFromExisting, \
     PartyDelete, PartyMakeInactive, \
     PartyRevokeOwnership, PartyGrantOwnership, \
@@ -21,6 +21,18 @@ from party_calculator.views.templates import TemplateDelete, TemplateSetFrequenc
 urlpatterns = [
     url(r'^$', HomeView.as_view(),
         name=HomeView.name),
+
+    url(r'^profile$', ProfileView.as_view(),
+        name=ProfileView.name),
+
+    url(r'^card/add$', CardAdd.as_view(),
+        name=CardAdd.name),
+
+    url(r'^card/update/(?P<recurring_detail_reference>\d+)$', CardUpdate.as_view(),
+        name=CardUpdate.name),
+
+    url(r'^card/delete/(?P<recurring_detail_reference>\d+)$', CardDelete.as_view(),
+        name=CardDelete.name),
 
     url(r'^party/(?P<party_id>\d+)$', PartyView.as_view(),
         name=PartyView.name),

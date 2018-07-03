@@ -15,6 +15,9 @@ class Profile(User):
     legacy_id = models.IntegerField(null=True, blank=False)
     verification = models.OneToOneField('Code', null=True, on_delete=models.SET_NULL)
 
+    def __str__(self):
+        return self.username
+
 
 class Code(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
